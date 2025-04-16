@@ -1,11 +1,14 @@
-from datetime import datetime, timedelta
-from typing import TypedDict, List, Dict, Any, Optional
+from datetime import datetime
+from typing import List, Dict, Any
 import json
 import pytz
 import os
 
+# Models
+from src.models import CalendarModel, CalendarEvent, TaskListModel, TaskModel
+
 # Agents and tools
-from langchain.tools import BaseTool, StructuredTool, tool
+from langchain.tools import tool
 
 # Google API client libraries
 from google.oauth2.credentials import Credentials
@@ -49,7 +52,7 @@ tasks_service = build("tasks", "v1", credentials=creds)
 
 @tool
 def create_calendar_event(
-    summary: str, start_time: str, end_time: str, calendar_id="primary"
+    summary: str, start_time: str, end_time: str
 ) -> Dict[str, Any]:
     """Create a new calendar event."""
     print(f"Creating new event '{summary}'...")
@@ -64,9 +67,95 @@ def create_calendar_event(
     # Insert new event
     created_event = (
         calendar_service.events()
-        .insert(calendarId=calendar_id, body=event_body)
+        .insert(calendarId=os.getenv("CALENDAR_ID"), body=event_body)
         .execute()
     )
 
     print(f"Event created: {created_event['htmlLink']}")
     return created_event
+
+
+def list_calendars() -> List[Dict[str, Any]]:
+    """List all calendars."""
+    calendars_result = calendar_service.calendarList().list().execute()
+    calendars = [
+        CalendarModel(id=calendar["id"], summary=calendar["summary"])
+        for calendar in calendars_result.get("items", [])
+    ]
+    return calendars
+
+
+def get_calendar_events(id=None, date=None) -> List[CalendarEvent]:
+    """Fetch calendar events for the specified date (today by default)."""
+    if not date:
+        date = datetime.now(timezone)
+    if id is None:
+        id = "primary"
+
+    # Set time boundaries for the day
+    start_time = date.replace(hour=0, minute=0, second=0).isoformat()
+    end_time = date.replace(hour=23, minute=59, second=59).isoformat()
+
+    events_result = (
+        calendar_service.events()
+        .list(
+            calendarId=id,
+            timeMin=start_time,
+            timeMax=end_time,
+            singleEvents=True,
+            orderBy="startTime",
+        )
+        .execute()
+    )
+
+    events = [
+        CalendarEvent(
+            id=event["id"],
+            summary=event["summary"],
+            start=event["start"]["dateTime"],
+            end=event["end"]["dateTime"],
+        )
+        for event in events_result.get("items", [])
+    ]
+
+    return events
+
+
+def list_tasks() -> List[Dict[str, Any]]:
+    """List all task lists."""
+    tasklists_result = tasks_service.tasklists().list().execute()
+    tasklists = [
+        TaskListModel(title=task_list["title"], id=task_list["id"])
+        for task_list in tasklists_result.get("items", [])
+    ]
+    return tasklists
+
+
+def get_tasks(task_list_id="@default") -> List[Dict[str, Any]]:
+    """Fetch tasks from a specific task list."""
+
+    # Get incomplete tasks
+    tasks_result = (
+        tasks_service.tasks()
+        .list(
+            tasklist=task_list_id,
+            showCompleted=False,
+            showHidden=False,
+            showDeleted=False,
+        )
+        .execute()
+    )
+
+    tasks = tasks_result.get("items", [])
+
+    tasks = [
+        TaskModel(
+            id=task["id"],
+            title=task["title"],
+            notes=task.get("notes", ""),
+            due_date=task.get("due", "No due date"),
+        )
+        for task in tasks
+    ]
+
+    return tasks

@@ -31,7 +31,20 @@ def get_date_in_iso_format(date_str: str) -> str:
     return iso_time
 
 
-@tool
+from pydantic import BaseModel, Field
+
+
+class SumToDateInput(BaseModel):
+    date_str: str = Field(
+        description="The date to which weeks, days, hours, and minutes will be added. Should be a string"
+    )
+    weeks: int = Field(description="Number of weeks to add")
+    days: int = Field(description="Number of days to add")
+    hours: int = Field(description="Number of hours to add")
+    minutes: int = Field(description="Number of minutes to add")
+
+
+@tool(args_schema=SumToDateInput)
 def sum_to_date(date_str: str, weeks: int, days: int, hours: int, minutes: int) -> str:
     """Add weeks, days, hours, and minutes to a date string in ISO format.
 

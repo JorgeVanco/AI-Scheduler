@@ -1,18 +1,42 @@
 import os
 from dotenv import load_dotenv
-from typing import Any
+from typing import Any, TypedDict, Annotated, Dict
+import operator
 
 # Agent imports
 from langchain_ollama import ChatOllama
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
+
+# from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage
-from langgraph.prebuilt import create_react_agent
+from langgraph.graph import StateGraph, END
 from langfuse import Langfuse
-from langfuse.decorators import observe
-from langgraph.checkpoint.memory import MemorySaver
+from langfuse.callback import CallbackHandler
+from langgraph.graph.state import CompiledStateGraph
+
+# Prompts
+from src.prompts import (
+    AGENT_SYSTEM,
+    PLANNER_PROMPT,
+    EVENT_CREATOR_PROMPT,
+    PLANNER_SYSTEM,
+)
+
+# Models imports
+from src.models import (
+    CalendarEvent,
+    TaskListModel,
+    CalendarEventList,
+    TasksList,
+)
 
 # Tools imports
 from src.tools import (
     create_calendar_event,
+    list_calendars,
+    get_calendar_events,
+    list_tasks,
+    get_tasks,
     get_current_time,
     get_date_in_iso_format,
     sum_to_date,
@@ -20,60 +44,161 @@ from src.tools import (
 
 load_dotenv()
 
-langfuse = Langfuse(
-    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-    host=os.getenv("LANGFUSE_HOST"),
-)
 
-# Initialize our LLM
-model = ChatOllama(model="llama3.1:8b", temperature=0)
-tools = [get_current_time, get_date_in_iso_format, sum_to_date, create_calendar_event]
-model = model.bind_tools(tools)
+# GRAPH
+class ScheduleState(TypedDict):
+    # Processing metadata
+    messages: Annotated[
+        list[AnyMessage], operator.add
+    ]  # Track conversation with LLM for analysis
+    current_time: str
 
-memory = MemorySaver()
-agent_executor = create_react_agent(model, tools, checkpointer=memory)
+    calendars: CalendarEventList  # List of calendars
+    events: list[CalendarEvent]  # List of calendar events
+    tasks: list[TaskListModel]  # List of tasks
+    schedule: str  # Generated schedule
 
 
-@observe
-def run_agent() -> dict[str, Any] | Any:
-    config = {"configurable": {"thread_id": "abc123"}}
-    for step in agent_executor.stream(
-        {
-            "messages": [
+class Agent:
+    def __init__(self, model, tools, checkpointer=None, system="") -> None:
+        self.checkpointer = checkpointer
+        self.system = system
+
+        self.graph = self.build_graph()
+
+        self.tools = {t.name: t for t in tools}
+        self.model = model.bind_tools(tools)
+        self.planner = model
+
+    def build_graph(self) -> CompiledStateGraph:
+        graph = StateGraph(ScheduleState)
+        graph.add_node("get_current_time", self.get_current_time)
+        graph.add_node("get_calendars", self.get_calendars)
+        graph.add_node("get_calendar_events", self.get_calendar_events)
+        graph.add_node("get_tasks", self.get_tasks)
+        graph.add_node("plan", self.plan)
+        graph.add_node("llm", self.call_llm)
+        graph.add_node("action", self.take_action)
+        graph.add_edge("get_current_time", "get_calendars")
+        graph.add_edge("get_calendars", "get_calendar_events")
+        graph.add_edge("get_calendar_events", "get_tasks")
+        graph.add_edge("get_tasks", "plan")
+        # graph.add_edge("get_calendar_events", "llm")
+        graph.add_edge("plan", "llm")
+        graph.add_conditional_edges(
+            "llm", self.exists_action, {True: "action", False: END}
+        )
+        graph.add_edge("action", "llm")
+        graph.set_entry_point("get_current_time")
+        return graph.compile(checkpointer=self.checkpointer)
+
+    def get_current_time(self, state: ScheduleState) -> Dict[str, Any]:
+        current_time = get_current_time.invoke("")
+        return {"current_time": current_time}
+
+    def get_calendars(self, state: ScheduleState) -> Dict[str, Any]:
+        calendars = list_calendars()
+        return {"calendars": calendars}
+
+    def get_calendar_events(self, state: ScheduleState) -> Dict[str, Any]:
+        events = [
+            {calendar.summary: get_calendar_events(calendar.id)}
+            for calendar in state["calendars"]
+        ]
+        events = CalendarEventList(events=events)
+        return {"events": events}
+
+    def get_tasks(self, state: ScheduleState) -> Dict[str, Any]:
+        tasks_lists = list_tasks()
+        tasks = [
+            {task_list.title: get_tasks(task_list.id)} for task_list in tasks_lists
+        ]
+        tasks = TasksList(tasks=tasks)
+        return {"tasks": tasks}
+
+    def plan(self, state: ScheduleState) -> Dict[str, Any]:
+        message = self.planner.invoke(
+            [
+                SystemMessage(PLANNER_SYSTEM),
                 HumanMessage(
-                    content=f"Please create a calendar event for a meeting in 2 days at 5pm that will last for an hour in the calendar with id {os.getenv('CALENDAR_ID')}. The current date is {get_current_time.invoke('')}. "
-                )
-            ]
-        },
-        config,
-        stream_mode="values",
+                    content=PLANNER_PROMPT.format(
+                        current_time=state["current_time"],
+                        events=state["events"],
+                        tasks=state["tasks"],
+                    )
+                ),
+            ],
+        )
+        return {"messages": [message], "schedule": message.content}
+
+    def call_llm(self, state: ScheduleState) -> Dict[str, Any]:
+        messages = state["messages"]
+        if self.system:
+            messages = (
+                [
+                    SystemMessage(
+                        content=self.system
+                        + f"The current date is {state['current_time']}"
+                    )
+                ]
+                + messages
+                + [
+                    HumanMessage(
+                        content=EVENT_CREATOR_PROMPT.format(schedule=state["schedule"])
+                    )
+                ]
+            )
+        message = self.model.invoke(messages)
+        return {"messages": [message]}
+
+    def exists_action(self, state: ScheduleState) -> bool:
+        result = state["messages"][-1]
+        return len(result.tool_calls) > 0
+
+    def take_action(self, state: ScheduleState) -> Dict[str, list]:
+        tool_calls = state["messages"][-1].tool_calls
+        results = []
+        for t in tool_calls:
+            print(f"Calling: {t}")
+            result = self.tools[t["name"]].invoke(t["args"])
+            results.append(
+                ToolMessage(tool_call_id=t["id"], name=t["name"], content=str(result))
+            )
+        print("Back to the model!")
+        return {"messages": results}
+
+
+def run_agent() -> None:
+    for event in agent.graph.stream(
+        {"messages": messages}, config={"callbacks": [langfuse_handler]}
     ):
-        step["messages"][-1].pretty_print()
-    return step
-
-
-# @observe
-# def run_agent() -> dict[str, Any] | Any:
-#     config = {"configurable": {"thread_id": "abc123"}}
-#     result = agent_executor.invoke(
-#         {
-#             "messages": [
-#                 HumanMessage(
-#                     content=f"Please create a calendar event for a meeting in 2 days at 5pm that will last for an hour in the calendar with id {os.getenv('CALENDAR_ID')}. First use the tools to get the correct times and dates and then create the calendar event with the output of those tool calls. Always check the current date to make sure you know the date and use it. The current date is {get_current_time.invoke('')}. "
-#                 )
-#             ]
-#         },
-#         config,
-#     )
-#     print(result)
-#     return result
-
-
-@observe
-def main() -> None:
-    return run_agent()
+        for v in event.values():
+            if "messages" in v:
+                v["messages"][-1].pretty_print()
 
 
 if __name__ == "__main__":
-    main()
+    langfuse = Langfuse(
+        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+        host=os.getenv("LANGFUSE_HOST"),
+    )
+    langfuse_handler = CallbackHandler()
+
+    # Initialize our LLM
+    model = ChatOllama(model="llama3.1:8b", temperature=0)
+    tools = [
+        get_current_time,
+        get_date_in_iso_format,
+        sum_to_date,
+        create_calendar_event,
+    ]
+    agent = Agent(
+        model,
+        tools,
+        checkpointer=None,
+        system=AGENT_SYSTEM,
+    )
+    messages = []
+
+    run_agent()
