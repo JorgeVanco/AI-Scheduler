@@ -77,18 +77,21 @@ class Agent:
         graph.add_node("get_calendar_events", self.get_calendar_events)
         graph.add_node("get_tasks", self.get_tasks)
         graph.add_node("plan", self.plan)
+        graph.add_node("prompt_event_creation", self.prompt_event_creation)
         graph.add_node("llm", self.call_llm)
         graph.add_node("action", self.take_action)
+
         graph.add_edge("get_current_time", "get_calendars")
         graph.add_edge("get_calendars", "get_calendar_events")
         graph.add_edge("get_calendar_events", "get_tasks")
         graph.add_edge("get_tasks", "plan")
-        # graph.add_edge("get_calendar_events", "llm")
-        graph.add_edge("plan", "llm")
+        graph.add_edge("plan", "prompt_event_creation")
+        graph.add_edge("prompt_event_creation", "llm")
         graph.add_conditional_edges(
             "llm", self.exists_action, {True: "action", False: END}
         )
         graph.add_edge("action", "llm")
+
         graph.set_entry_point("get_current_time")
         return graph.compile(checkpointer=self.checkpointer)
 
@@ -131,23 +134,21 @@ class Agent:
         )
         return {"messages": [message], "schedule": message.content}
 
+    def prompt_event_creation(self, state: ScheduleState) -> Dict[str, Any]:
+        """Add the event creation prompt to the messages once after planning"""
+        return {
+            "messages": [
+                SystemMessage(
+                    content=self.system + f"The current date is {state['current_time']}"
+                ),
+                HumanMessage(
+                    content=EVENT_CREATOR_PROMPT.format(schedule=state["schedule"])
+                ),
+            ]
+        }
+
     def call_llm(self, state: ScheduleState) -> Dict[str, Any]:
         messages = state["messages"]
-        if self.system:
-            messages = (
-                [
-                    SystemMessage(
-                        content=self.system
-                        + f"The current date is {state['current_time']}"
-                    )
-                ]
-                + messages
-                + [
-                    HumanMessage(
-                        content=EVENT_CREATOR_PROMPT.format(schedule=state["schedule"])
-                    )
-                ]
-            )
         message = self.model.invoke(messages)
         return {"messages": [message]}
 
