@@ -163,7 +163,9 @@ class Agent:
             [
                 SystemMessage(REVIEWER_SYSTEM),
                 HumanMessage(
-                    content=REVIEWER_PROMPT.format(schedule=state["schedule"])
+                    content=REVIEWER_PROMPT.format(
+                        schedule=state["schedule"], events=state["events"]
+                    )
                 ),
             ]
         )

@@ -21,7 +21,7 @@ class CalendarEvent(BaseModel):
     end: str = Field(..., description="End time of the event")
 
     def __str__(self) -> str:
-        return f"Event: {self.summary}\nStart: {parse_iso_date(self.start)}\nEnd: {parse_iso_date(self.end)}"
+        return f"**{parse_iso_date(self.start)} - {parse_iso_date(self.end)}**: {self.summary}"
 
     def __repr__(self) -> str:
         return self.__str__()

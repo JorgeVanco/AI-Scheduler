@@ -54,7 +54,13 @@ tasks_service = build("tasks", "v1", credentials=creds)
 def create_calendar_event(
     summary: str, start_time: str, end_time: str
 ) -> Dict[str, Any]:
-    """Create a new calendar event."""
+    """Create a new calendar event.
+
+    Args:
+        summary (str): Summary of the event.
+        start_time (str): Start time in ISO format.
+        end_time (str): End time in ISO format.
+    """
     print(f"Creating new event '{summary}'...")
 
     # Create event body

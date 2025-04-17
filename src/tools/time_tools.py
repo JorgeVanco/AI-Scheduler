@@ -16,7 +16,8 @@ def get_current_time() -> str:
 
 @tool
 def get_date_in_iso_format(date_str: str) -> str:
-    """Get the time from a date string in ISO format (YYYY-MM-DD HH:MM).
+    """Get the time from a date string in ISO format
+    From (YYYY-MM-DD HH:MM) to (YYYY-MM-DDTHH:MM:SS).
 
     Example:
     Input: "2023-10-01 12:30"

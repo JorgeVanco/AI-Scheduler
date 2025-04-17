@@ -19,6 +19,7 @@ The list of tasks:
 Write my daily schedule for today. 
 Add the tasks I have to do today to the schedule.
 Make sure to include the time for each task and event.
+Make sure that you leave the existing events in their place and do not change them.
 Each task should be assigned a time slot in the schedule, just like each event. Try to guess what how much time a task would take based on its information. Do not put two tasks at the same time.
 """
 
@@ -27,9 +28,13 @@ PLANNER_SYSTEM = """You are a profesional planner for a university student. You 
 EVENT_CREATOR_PROMPT = """
 Use the following schedule to create all the events for the day.
 Please ensure that the events are organized by time and include all necessary details.
+Call the tool create_calendar_event to create each of the events.
+
 Schedule:
 
 {schedule}
+
+Make sure to follow the schedule given and do not change it.
 
 """
 
@@ -43,8 +48,14 @@ If you have not suggested any changes to the schedule, end your answer if OK. On
 """
 
 REVIEWER_PROMPT = """
-This is the schedule that has been created for today:
+I will give you the events that I have today and the schedule that has been planned.
+Make sure the schedule is correct and that the events are in the right order.
+The events that I already have must stay in the same place.
 Please review the following schedule and provide any necessary feedback.
+
+Events:
+
+{events}
 
 Schedule:
 
