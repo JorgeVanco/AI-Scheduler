@@ -45,10 +45,14 @@ class TaskModel(BaseModel):
     due_date: str = Field("No due date", description="Due date of the task")
 
     def __str__(self) -> str:
-        return f"Task: {self.title}, Notes: {self.notes}" + (
-            f", Due: {parse_iso_date(self.due_date)}"
-            if self.due_date != "No due date"
-            else ""
+        return (
+            f"Task: {self.title}"
+            + (f", Notes: {self.notes}" if self.notes != "" else "")
+            + (
+                f", Due: {parse_iso_date(self.due_date)}"
+                if self.due_date != "No due date"
+                else ""
+            )
         )
 
     def __repr__(self) -> str:
