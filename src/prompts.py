@@ -3,7 +3,7 @@ You are going to create a daily plan based on the following calendar event infor
 The plan should include the following information:
 The current date: {current_time}
 
-The list of events:
+The list of events, which have to appear at the same time in the schedule:
 
 {events}
 
@@ -18,9 +18,10 @@ Add the tasks I have to do today to the schedule.
 Make sure to include the time for each task and event.
 Make sure that you leave the existing events in their place and do not change them. It is important that the existing events are added with their correct time and that they are not changed.
 Each task should be assigned a time slot in the schedule, just like each event. Try to guess what how much time a task would take based on its information. Do not put two tasks at the same time.
+Do not hallucinate and do not add any extra information to the schedule. Just use the information given to you.
 """
 
-PLANNER_SYSTEM = """You are a profesional planner for a university student. You will be given a list of calendars and their events. The plan should include the following information:\n\n"""
+PLANNER_SYSTEM = """You are a profesional planner for a university student. You will be given a list of calendars, their events and their tasks."""
 
 EVENT_CREATOR_PROMPT = """
 Use the following schedule to create all the events for the day.
@@ -45,16 +46,16 @@ If you have not suggested any changes to the schedule, end your answer if OK. On
 """
 
 REVIEWER_PROMPT = """
-I will give you the events that I have today and the schedule that has been planned.
+I will give you the events that I have today and the schedule that has been planned, you cannot reschedule those events.
 Make sure the schedule is correct and that the events are in the right order.
-The events that are given must remain in the same place in the schedule, this is very important.
+The events that are given must remain in the same place in the schedule, if any is incorrectly placed, it must be changed, this is very important.
 Please review the following schedule and provide any necessary feedback.
 
-Events:
+Events, which have to appear at the same time in the schedule:
 
 {events}
 
-Schedule:
+Schedule create for today, which has to be reviewed:
 
 {schedule}
 
