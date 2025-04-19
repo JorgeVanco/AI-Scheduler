@@ -117,7 +117,7 @@ def get_calendar_events(id=None, date=None) -> List[CalendarEvent]:
     events = [
         CalendarEvent(
             id=event["id"],
-            summary=event["summary"],
+            summary=event.get("summary", "No summary"),
             start=event["start"]["dateTime"],
             end=event["end"]["dateTime"],
         )
