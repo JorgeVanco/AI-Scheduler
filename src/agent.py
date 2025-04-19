@@ -237,7 +237,7 @@ if __name__ == "__main__":
     langfuse_handler = CallbackHandler()
 
     # Initialize our LLM
-    model = ChatOllama(model="llama3.1:8b", temperature=0)
+    model = ChatOllama(model="llama3.1:8b", temperature=0, max_tokens=4000)
     tools = [
         get_current_time,
         get_date_in_iso_format,
