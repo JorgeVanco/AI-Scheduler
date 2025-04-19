@@ -3,3 +3,4 @@
 __pycache__
 .env
 personal_prompt.py
+venv/
