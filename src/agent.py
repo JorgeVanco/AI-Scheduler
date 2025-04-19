@@ -25,6 +25,11 @@ from src.prompts import (
     REVIEWER_SYSTEM,
 )
 
+try:
+    from src.personal_prompt import PERSONAL_PROMPT
+except ImportError:
+    PERSONAL_PROMPT = ""
+
 # Models imports
 from src.models import (
     CalendarEvent,
@@ -143,6 +148,7 @@ class Agent:
                     events=state["events"],
                     tasks=state["tasks"],
                 )
+                + PERSONAL_PROMPT,
             ),
         ]
 
@@ -166,6 +172,7 @@ class Agent:
                     content=REVIEWER_PROMPT.format(
                         schedule=state["schedule"], events=state["events"]
                     )
+                    + PERSONAL_PROMPT,
                 ),
             ]
         )
