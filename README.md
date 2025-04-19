@@ -2,6 +2,11 @@
 
 An AI agent that can help you create your schedule of the day using your google calendar and google tasks.
 
+The AI agent will go through the events that you have planned for the day and the tasks you have in your google tasks.
+It will then create a schedule that contains all the events and some of the tasks added in the day.
+
+**Note:** This AI agent is an experimental tool and is not perfect. It may occasionally make mistakes in scheduling or fail to properly prioritize tasks. Always review the generated schedule and make adjustments as needed. The agent's effectiveness will improve with feedback and continued development.
+
 ## Installation Steps
 
 1. **Clone the Repository**
