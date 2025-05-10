@@ -19,9 +19,12 @@ def get_date_in_iso_format(date_str: str) -> str:
     """Get the time from a date string in ISO format
     From (YYYY-MM-DD HH:MM) to (YYYY-MM-DDTHH:MM:SS).
 
+    Args:
+        date_str (str): The date in the format YYYY-MM-DD HH:MM to convert into ISO format.
+
     Example:
-    Input: "2023-10-01 12:30"
-    Output: "2023-10-01T12:30:00"
+        Input: "2023-10-01 12:30"
+        Output: "2023-10-01T12:30:00"
     """
     # Parse the date string
     date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
@@ -48,6 +51,14 @@ class SumToDateInput(BaseModel):
 @tool(args_schema=SumToDateInput)
 def sum_to_date(date_str: str, weeks: int, days: int, hours: int, minutes: int) -> str:
     """Add weeks, days, hours, and minutes to a date string in ISO format.
+
+    Args:
+        date_str: The date string in ISO format
+        weeks (int): the number of weeks to sum
+        days (int): the number of days to sum
+        hours (int): the number of hours to sum
+        minutes (int): the number of minutes to sum
+
 
     Returns: The resulting date in ISO format.
     """

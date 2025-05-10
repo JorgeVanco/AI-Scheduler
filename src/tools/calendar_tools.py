@@ -91,7 +91,7 @@ def list_calendars() -> List[Dict[str, Any]]:
     return calendars
 
 
-def get_calendar_events(id=os.getenv("CALENDAR_ID"), date=None) -> List[CalendarEvent]:
+def get_calendar_events(id:str=os.getenv("CALENDAR_ID"), date:str=None) -> List[CalendarEvent]:
     """Fetch calendar events for the specified date (today by default).
 
     Args:
@@ -140,8 +140,12 @@ def list_tasks() -> List[Dict[str, Any]]:
     return tasklists
 
 
-def get_tasks(task_list_id="@default") -> List[Dict[str, Any]]:
-    """Fetch tasks from a specific task list."""
+def get_tasks(task_list_id:str="@default") -> List[Dict[str, Any]]:
+    """Fetch tasks from a specific task list.
+    
+    Args:
+        task_list_id (str): The id of the task list to get the tasks from.
+    """
 
     # Get incomplete tasks
     tasks_result = (
