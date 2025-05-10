@@ -56,7 +56,13 @@ It will then create a schedule that contains all the events and some of the task
     - Create OAuth 2.0 credentials and download the `credentials.json` file
     - Place the `credentials.json` file in the project root directory
 
-5. **Configure Langfuse for Tracking (Optional)**
+5. **Add CALENDAR_ID to environment variables**
+    - Create a `.env` file in the project root directory
+    - Add the `CALENDAR_ID` variable with the id of the calendar to which you want the agent to add the events. 
+    - You can get your calendar ID from the calendar configuration at Google Calendar.
+    - Your main calendar will probably have your email as ID.
+
+6. **Configure Langfuse for Tracking (Optional)**
 
     - Go to [Langfuse](https://langfuse.com) and create an account
     - Create a new project and get your API keys
@@ -71,13 +77,13 @@ It will then create a schedule that contains all the events and some of the task
 
     Alternatively, if you don't want to use Langfuse, open `src/agent.py` and remove or comment out all code related to `langfuse_handler`.
 
-6. **Run the Application**
+7. **Run the Application**
 
     ```bash
     python -m src.agent
     ```
 
-7. **First Run Authorization**
+8. **First Run Authorization**
     - On first run, the application will open a browser window
     - Log in with your Google account and authorize the application
     - The app will save your tokens locally for future use
