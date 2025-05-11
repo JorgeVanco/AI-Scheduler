@@ -13,6 +13,7 @@ from langgraph.graph import StateGraph, END
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
 from langgraph.graph.state import CompiledStateGraph
+import openai
 
 # Prompts
 from src.prompts import (
@@ -206,7 +207,16 @@ class Agent:
 
     def call_llm(self, state: ScheduleState) -> Dict[str, Any]:
         messages = state["messages"]
-        message = self.model.invoke(messages)
+        invoked_successful = False
+        while not invoked_successful:
+            try:
+                message = self.model.invoke(messages)
+                invoked_successful = True
+            except openai.UnprocessableEntityError:
+                print("Reducing input messages...")
+                messages = messages[1:]
+                state["messages"] = messages
+
         return {"messages": [message]}
 
     def exists_action(self, state: ScheduleState) -> bool:
