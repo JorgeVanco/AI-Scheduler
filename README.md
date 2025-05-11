@@ -24,29 +24,50 @@ It will then create a schedule that contains all the events and some of the task
     pip install -r requirements.txt
     ```
 
-3. **Download Ollama**
+3. **Prepare model to use**
 
-    Visit [Ollama's download page](https://ollama.com/download) and install it according to your operating system instructions.
+    There are several ways to use free models as your schedulers.
+    The first one is using `Ollama` to run you model locally.
+    The second option is to use a free model provided by `Together.ai`.
 
-    After installing Ollama, run the following command to download the Llama3 8B model:
+    1. **Option 1: Download Ollama**
+
+    - Visit [Ollama's download page](https://ollama.com/download) and install it according to your operating system instructions.
+
+    - After installing Ollama, run the following command to download the Llama3 8B model:
 
     ```bash
     ollama pull llama3:8b
     ```
 
-    If you prefer to use a different model, you can modify the model initialization in `src/agent.py`:
+    - If you prefer to use a different model, you can modify the model initialization in `src/agent.py`:
 
     ```python
     # Change this line:
-    llm = ChatOllama(model="llama3:8b")
+    model = ChatOllama(model="llama3:8b")
 
     # To use a different model like:
-    # llm = ChatOllama(model="mistral:7b")
-    # llm = ChatOllama(model="gemma:7b")
+    # model = ChatOllama(model="mistral:7b")
+    # model = ChatOllama(model="gemma:7b")
     # Or any other model supported by Ollama or any other provider you might want to use
     ```
 
     You'll need to pull your chosen model first using `ollama pull model_name`.
+
+    2. **Option 2: Get your Together.ai API key**
+
+    - Visit [Together.ai settings](https://api.together.ai/settings/api-keys) to get your API key.
+    - Create a `.env` file in the project root directory
+    - Add the `TOGETHER_API_KEY` variable with the api key.
+    ```
+    TOGETHER_API_KEY=<your-api-key>
+    ```
+
+    - To use the Together.ai inference provider, you'll have to change the model initialization:
+    ```python
+    model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free")
+    ```
+
 
 4. **Configure Google API Credentials**
 
@@ -58,9 +79,12 @@ It will then create a schedule that contains all the events and some of the task
 
 5. **Add CALENDAR_ID to environment variables**
     - Create a `.env` file in the project root directory
-    - Add the `CALENDAR_ID` variable with the id of the calendar to which you want the agent to add the events. 
     - You can get your calendar ID from the calendar configuration at Google Calendar.
     - Your main calendar will probably have your email as ID.
+    - Add the `CALENDAR_ID` variable with the id of the calendar to which you want the agent to add the events. 
+    ```
+    CALENDAR_ID=<your-calendar-id>
+    ```
 
 6. **Configure Langfuse for Tracking (Optional)**
 

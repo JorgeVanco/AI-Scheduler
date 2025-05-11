@@ -5,6 +5,7 @@ import operator
 
 # Agent imports
 from langchain_ollama import ChatOllama
+from langchain_together import ChatTogether
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
 
 # from langgraph.prebuilt import create_react_agent
@@ -254,7 +255,9 @@ if __name__ == "__main__":
     langfuse_handler = CallbackHandler()
 
     # Initialize our LLM
-    model = ChatOllama(model="llama3.1:8b", temperature=0, max_tokens=4000)
+    # model = ChatOllama(model="llama3.1:8b", temperature=0, max_tokens=4000)
+    model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", temperature=0, max_tokens=4000)
+
     tools = [
         get_current_time,
         get_date_in_iso_format,
