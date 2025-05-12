@@ -26,7 +26,7 @@ PLANNER_SYSTEM = """You are a profesional planner for a university student. You 
 EVENT_CREATOR_PROMPT = """
 Use the following schedule to create all the events for the day.
 Please ensure that the events are organized by time and include all necessary details.
-Call the tool create_calendar_event to create each of the events.
+Call the tool create_calendar_event or create_calendar_events to create each of the events.
 
 Schedule:
 

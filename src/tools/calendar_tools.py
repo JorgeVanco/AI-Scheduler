@@ -9,6 +9,7 @@ from src.models import CalendarModel, CalendarEvent, TaskListModel, TaskModel
 
 # Agents and tools
 from langchain.tools import tool
+# from smolagents import tool
 
 # Google API client libraries
 from google.oauth2.credentials import Credentials
@@ -48,6 +49,26 @@ print("Authentication successful!")
 # Build service clients
 calendar_service = build("calendar", "v3", credentials=creds)
 tasks_service = build("tasks", "v1", credentials=creds)
+
+@tool
+def create_calendar_events(calendar_events:list[dict[str, str]]):
+    """Creates all new calendar events at once given in a list with the summary, start_time and end_time
+
+    Args: 
+        calendar_events (list): List of calendar events.
+            Each calendar event is a dictionary with the following attributes:
+                summary (str): Summary of the event.
+                start_time (str): Start time in ISO format.
+                end_time (str): End time in ISO format.
+    """
+    print("Creating events...")
+    created_events = []
+    for event in calendar_events:
+        created_event = create_calendar_event.invoke(event)
+        created_events.append(created_event)
+
+    return created_events
+    
 
 
 @tool

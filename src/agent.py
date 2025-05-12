@@ -43,6 +43,7 @@ from src.models import (
 # Tools imports
 from src.tools import (
     create_calendar_event,
+    create_calendar_events,
     list_calendars,
     get_calendar_events,
     list_tasks,
@@ -263,6 +264,7 @@ if __name__ == "__main__":
         get_date_in_iso_format,
         sum_to_date,
         create_calendar_event,
+        create_calendar_events
     ]
     agent = Agent(
         model,
