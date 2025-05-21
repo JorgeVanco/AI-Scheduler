@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 from typing import Any, TypedDict, Annotated, Dict
 import operator
+import time
+import json
+import re
 
 # Agent imports
 from langchain_ollama import ChatOllama
@@ -51,6 +54,7 @@ from src.tools import (
     get_current_time,
     get_date_in_iso_format,
     sum_to_date,
+    get_time_read
 )
 
 load_dotenv()
@@ -60,6 +64,9 @@ load_dotenv()
 class ScheduleState(TypedDict):
     # Processing metadata
     messages: Annotated[
+        list[AnyMessage], operator.add
+    ]  # Track conversation with LLM for analysis
+    planning_messages: Annotated[
         list[AnyMessage], operator.add
     ]  # Track conversation with LLM for analysis
     current_time: str
@@ -86,6 +93,7 @@ class Agent:
         self.tools = {t.name: t for t in tools}
         self.model = model.bind_tools(tools)
         self.planner = model
+        self.time_estimator = model.bind(max_tokens=100)
 
     def build_graph(self) -> CompiledStateGraph:
         graph = StateGraph(ScheduleState)
@@ -93,6 +101,7 @@ class Agent:
         graph.add_node("get_calendars", self.get_calendars)
         graph.add_node("get_calendar_events", self.get_calendar_events)
         graph.add_node("get_tasks", self.get_tasks)
+        graph.add_node("get_time_duration_leer_tasks", self.get_time_duration_leer_tasks)
         graph.add_node("plan", self.plan)
         graph.add_node("review", self.review)
         graph.add_node("prompt_event_creation", self.prompt_event_creation)
@@ -102,7 +111,8 @@ class Agent:
         graph.add_edge("get_current_time", "get_calendars")
         graph.add_edge("get_calendars", "get_calendar_events")
         graph.add_edge("get_calendar_events", "get_tasks")
-        graph.add_edge("get_tasks", "plan")
+        graph.add_edge("get_tasks", "get_time_duration_leer_tasks")
+        graph.add_edge("get_time_duration_leer_tasks", "plan")
         graph.add_edge("plan", "review")
         graph.add_conditional_edges(
             "review",
@@ -141,6 +151,24 @@ class Agent:
         ]
         tasks = TasksList(tasks=tasks)
         return {"tasks": tasks}
+    
+    def get_time_duration_leer_tasks(self, state: ScheduleState) -> Dict[str, Any]:
+        regex = re.compile(r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)")
+        for task_list in state["tasks"].tasks:
+            for task in list(task_list.values())[0]:
+                title_match = "leer" in task.title.lower() and re.search(regex, task.title)
+                notes_match = "leer" in task.notes.lower() and re.search(regex, task.notes)
+
+                url = None
+                if title_match:
+                    url = title_match.group(0)
+                elif notes_match:
+                    url = notes_match.group(0)
+
+                if url:
+                    task.duration = json.loads(get_time_read.invoke({"url": url}))["time"]
+
+        return {"tasks": state["tasks"]}
 
     def plan(self, state: ScheduleState) -> Dict[str, Any]:
         prompts = [
@@ -165,8 +193,8 @@ class Agent:
             )
 
         message = self.planner.invoke(prompts)
-        return {"messages": [message], "schedule": message.content}
-
+        return {"planning_messages": [message], "schedule": message.content, "feedback": None}
+    
     def review(self, state: ScheduleState) -> Dict[str, Any]:
         message = self.planner.invoke(
             [
@@ -181,7 +209,7 @@ class Agent:
         )
 
         return {
-            "messages": [message],
+            "planning_messages": [message],
             "feedback": message.content,
             "rewrites": state.get("rewrites", 0) + 1,
         }
@@ -218,6 +246,10 @@ class Agent:
                 print("Reducing input messages...")
                 messages = messages[1:]
                 state["messages"] = messages
+            except openai.RateLimitError as error:
+                print(error)
+                print("waiting...")
+                time.sleep(20)
 
         return {"messages": [message]}
 
@@ -240,11 +272,13 @@ class Agent:
 
 def run_agent() -> None:
     for event in agent.graph.stream(
-        {"messages": messages}, config={"callbacks": [langfuse_handler]}
+        {"messages": messages}, config={"callbacks": [langfuse_handler], "recursion_limit": 100}
     ):
         for v in event.values():
-            if "messages" in v:
+            if v and "messages" in v:
                 v["messages"][-1].pretty_print()
+            elif v and "planning_messages" in v:
+                v["planning_messages"][-1].pretty_print()
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ class TaskModel(BaseModel):
     title: str = Field(..., description="Title of the task")
     notes: str = Field("", description="Notes for the task")
     due_date: str = Field("No due date", description="Due date of the task")
+    duration: str = Field("", description="Time duration of task")
 
     def __str__(self) -> str:
         return (
@@ -51,6 +52,11 @@ class TaskModel(BaseModel):
             + (
                 f", Due: {parse_iso_date(self.due_date)}"
                 if self.due_date != "No due date"
+                else ""
+            )
+            + (
+                f", Duration: {self.duration}"
+                if self.duration
                 else ""
             )
         )
