@@ -59,29 +59,59 @@ It will then create a schedule that contains all the events and some of the task
     - Visit [Together.ai settings](https://api.together.ai/settings/api-keys) to get your API key.
     - Create a `.env` file in the project root directory
     - Add the `TOGETHER_API_KEY` variable with the api key.
+
     ```
     TOGETHER_API_KEY=<your-api-key>
     ```
 
     - To use the Together.ai inference provider, you'll have to change the model initialization:
+
     ```python
     model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free")
     ```
 
-
 4. **Configure Google API Credentials**
 
-    - Go to the [Google Cloud Console](https://console.cloud.google.com/)
-    - Create a new project
-    - Enable the Google Calendar API and Google Tasks API
-    - Create OAuth 2.0 credentials and download the `credentials.json` file
-    - Place the `credentials.json` file in the project root directory
+    To allow your application to access Google Calendar and Google Tasks on your behalf, follow these steps to configure your Google API credentials:
+
+    1. **Go to the [Google Cloud Console](https://console.cloud.google.com/)**  
+       You’ll need to be signed into your Google account.
+
+    2. **Create a new project**
+
+        - Click on the project dropdown (top-left) and select **"New Project"**.
+        - Give your project a name and click **"Create"**.
+
+    3. **Enable APIs**
+
+        - In the project dashboard, go to **"APIs & Services" > "Library"**.
+        - Search for and **enable the following APIs**:
+            - **Google Calendar API**
+            - **Google Tasks API**
+
+    4. **Create OAuth 2.0 credentials**
+
+        - Navigate to **"APIs & Services" > "Credentials"**.
+        - Click **"Create Credentials"** and choose **"OAuth client ID"**.
+        - Configure the consent screen:
+            - Go to **"OAuth consent screen"**.
+            - Choose **"External"** and click **"Create"**.
+            - Fill in the required fields (App name, User support email, etc.).
+            - Under **"Test users"**, add your Google email address.
+        - Return to the **Credentials** page.
+        - Select **"Application type: Desktop app"** or **"Web application"** (depending on your use case).
+        - Download the generated `credentials.json` file.
+
+    5. **Place the `credentials.json` file in the project root directory**  
+       This is where your app will look for the file during authentication.
 
 5. **Add CALENDAR_ID to environment variables**
+
     - Create a `.env` file in the project root directory
     - You can get your calendar ID from the calendar configuration at Google Calendar.
     - Your main calendar will probably have your email as ID.
-    - Add the `CALENDAR_ID` variable with the id of the calendar to which you want the agent to add the events. 
+    - Add the `CALENDAR_ID` variable with the id of the calendar to which you want the agent to add the events.
+
     ```
     CALENDAR_ID=<your-calendar-id>
     ```
