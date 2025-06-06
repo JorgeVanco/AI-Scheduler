@@ -30,6 +30,8 @@ It will then create a schedule that contains all the events and some of the task
     The first one is using `Ollama` to run you model locally.
     The second option is to use a free model provided by `Together.ai`.
 
+    > **Important**: Verify that the desired model is correctly specified within the ```if __name__ == "__main__":``` block at the bottom of the `src/agent.py` file.
+
     1. **Option 1: Download Ollama**
 
     -   Visit [Ollama's download page](https://ollama.com/download) and install it according to your operating system instructions.
@@ -70,7 +72,7 @@ It will then create a schedule that contains all the events and some of the task
     model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free")
     ```
 
-4.  **Configure Google API Credentials**
+5.  **Configure Google API Credentials**
 
     To allow your application to access Google Calendar and Google Tasks on your behalf, follow these steps to configure your Google API credentials:
 
@@ -105,7 +107,7 @@ It will then create a schedule that contains all the events and some of the task
     5. **Place the `credentials.json` file in the project root directory**  
        This is where your app will look for the file during authentication.
 
-5.  **Add CALENDAR_ID to environment variables**
+6.  **Add CALENDAR_ID to environment variables**
 
     -   Create a `.env` file in the project root directory
     -   You can get your calendar ID from the calendar configuration at Google Calendar.
@@ -116,7 +118,7 @@ It will then create a schedule that contains all the events and some of the task
     CALENDAR_ID=your-calendar-id
     ```
 
-6.  **Configure Langfuse for Tracking (Optional)**
+7.  **Configure Langfuse for Tracking (Optional)**
 
     -   Go to [Langfuse](https://langfuse.com) and create an account
     -   Create a new project and get your API keys
@@ -131,19 +133,19 @@ It will then create a schedule that contains all the events and some of the task
 
     Alternatively, if you don't want to use Langfuse, open `src/agent.py` and remove or comment out all code related to `langfuse_handler`.
 
-7.  **Run the Application**
+8.  **Run the Application**
 
     ```bash
     python -m src.agent
     ```
 
-8.  **First Run Authorization**
+9.  **First Run Authorization**
 
     -   On first run, the application will open a browser window
     -   Log in with your Google account and authorize the application
     -   The app will save your tokens locally in the file for `token.json` future use
 
-9.  **Set Up GitHub Actions for Scheduled Execution (Optional)**
+10.  **Set Up GitHub Actions for Scheduled Execution (Optional)**
 
     If you'd like to run the AI Scheduler automatically on a daily schedule using GitHub Actions:
 
