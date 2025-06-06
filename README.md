@@ -107,6 +107,7 @@ It will then create a schedule that contains all the events and some of the task
     5. **Place the `credentials.json` file in the project root directory**  
        This is where your app will look for the file during authentication.
 
+
 5.  **Add CALENDAR_ID to environment variables**
 
     -   Create a `.env` file in the project root directory
@@ -118,22 +119,7 @@ It will then create a schedule that contains all the events and some of the task
     CALENDAR_ID=your-calendar-id
     ```
 
-6.  **Configure Langfuse for Tracking (Optional)**
-
-    -   Go to [Langfuse](https://langfuse.com) and create an account
-    -   Create a new project and get your API keys
-    -   Create a `.env` file in the project root directory
-    -   Add your Langfuse credentials:
-
-    ```
-    LANGFUSE_SECRET_KEY=sk-your-langfuse-secret-key
-    LANGFUSE_PUBLIC_KEY=pk-your-langfuse-public-key
-    LANGFUSE_HOST=https://cloud.langfuse.com
-    ```
-
-    Alternatively, if you don't want to use Langfuse, open `src/agent.py` and remove or comment out all code related to `langfuse_handler`.
-
-7.  **Adding Your Personal Touch (Optional)**
+6.  **Adding Your Personal Touch (Optional)**
 
     You can customize the AI agent's behavior by defining a `PERSONAL_PROMPT` in `personal_prompt.py`. This allows you to provide specific instructions or preferences that the AI will consider when generating your schedule.
 
@@ -155,6 +141,21 @@ It will then create a schedule that contains all the events and some of the task
     ```
 
     > **Note**: If you want to run the agent with GitHub Actions (see [Set Up GitHub Actions Section](#github-actions)), you will have to upload `personal_prompt.py` to your GitHub repo or follow the same steps as indicated for the contents of `credentials.json` and `token.json` (steps are explained in [Set Up GitHub Actions Section](#github-actions)).
+
+7.  **Configure Langfuse for Tracking (Optional)**
+
+    -   Go to [Langfuse](https://langfuse.com) and create an account
+    -   Create a new project and get your API keys
+    -   Create a `.env` file in the project root directory
+    -   Add your Langfuse credentials:
+
+    ```
+    LANGFUSE_SECRET_KEY=sk-your-langfuse-secret-key
+    LANGFUSE_PUBLIC_KEY=pk-your-langfuse-public-key
+    LANGFUSE_HOST=https://cloud.langfuse.com
+    ```
+
+    Alternatively, if you don't want to use Langfuse, open `src/agent.py` and remove or comment out all code related to `langfuse_handler`.
 
 8.  **Run the Application**
 
@@ -238,7 +239,3 @@ It will then create a schedule that contains all the events and some of the task
         You can manually trigger the workflow by going to the **Actions** tab in your GitHub repository, selecting the `Run Scheduler` workflow, and clicking the **Run workflow** button.
 
         This flexibility lets you run the scheduler on demand or automatically on a set schedule.
-
-```
-
-```
