@@ -12,6 +12,14 @@ jobs:
     run-python:
         runs-on: ubuntu-latest
 
+        env:
+            HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+            TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
+            CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
+            LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+            LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+            LANGFUSE_HOST: ${{ secrets.LANGFUSE_HOST }}
+
         steps:
             - name: Checkout repository
               uses: actions/checkout@v3
