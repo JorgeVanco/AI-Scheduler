@@ -133,19 +133,42 @@ It will then create a schedule that contains all the events and some of the task
 
     Alternatively, if you don't want to use Langfuse, open `src/agent.py` and remove or comment out all code related to `langfuse_handler`.
 
-7.  **Run the Application**
+7.  **Adding Your Personal Touch (Optional)**
+
+    You can customize the AI agent's behavior by defining a `PERSONAL_PROMPT` in `personal_prompt.py`. This allows you to provide specific instructions or preferences that the AI will consider when generating your schedule.
+
+    By default, `PERSONAL_PROMPT` is an empty string. You can modify it to guide the AI with your personal scheduling philosophy.
+
+    **Example:**
+
+    Let's say you want the AI to prioritize tasks related to health and fitness and to always include a dedicated "lunch break."
+
+    **`personal_prompt.py`**
+
+    ```python
+    PERSONAL_PROMPT = """
+    - Always prioritize tasks related to "health," "workout," or "fitness."
+    - Ensure a 1-hour "Lunch Break" is scheduled daily between 12:00 PM and 2:00 PM.
+    - Try to group similar tasks together to minimize context switching.
+    - Allocate short breaks (5-10 minutes) every 2 hours for stretching or hydration.
+    """
+    ```
+
+    > **Note**: If you want to run the agent with GitHub Actions (see [Set Up GitHub Actions Section](#github-actions)), you will have to upload `personal_prompt.py` to your GitHub repo or follow the same steps as indicated for the contents of `credentials.json` and `token.json` (steps are explained in [Set Up GitHub Actions Section](#github-actions)).
+
+8.  **Run the Application**
 
     ```bash
     python -m src.agent
     ```
 
-8.  **First Run Authorization**
+9.  **First Run Authorization**
 
     -   On first run, the application will open a browser window
     -   Log in with your Google account and authorize the application
     -   The app will save your tokens locally in the file for `token.json` future use
 
-9.  **Set Up GitHub Actions for Scheduled Execution (Optional)**
+10. <a id="github-actions"></a>**Set Up GitHub Actions for Scheduled Execution (Optional)**
 
     If you'd like to run the AI Scheduler automatically on a daily schedule using GitHub Actions:
 
@@ -215,3 +238,7 @@ It will then create a schedule that contains all the events and some of the task
         You can manually trigger the workflow by going to the **Actions** tab in your GitHub repository, selecting the `Run Scheduler` workflow, and clicking the **Run workflow** button.
 
         This flexibility lets you run the scheduler on demand or automatically on a set schedule.
+
+```
+
+```

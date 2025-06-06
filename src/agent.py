@@ -31,7 +31,7 @@ from src.prompts import (
 )
 
 try:
-    from src.personal_prompt import PERSONAL_PROMPT
+    from personal_prompt import PERSONAL_PROMPT
 except ImportError:
     PERSONAL_PROMPT = ""
 
@@ -54,7 +54,7 @@ from src.tools import (
     get_current_time,
     get_date_in_iso_format,
     sum_to_date,
-    get_time_read
+    get_time_read,
 )
 
 load_dotenv()
@@ -101,7 +101,9 @@ class Agent:
         graph.add_node("get_calendars", self.get_calendars)
         graph.add_node("get_calendar_events", self.get_calendar_events)
         graph.add_node("get_tasks", self.get_tasks)
-        graph.add_node("get_time_duration_leer_tasks", self.get_time_duration_leer_tasks)
+        graph.add_node(
+            "get_time_duration_leer_tasks", self.get_time_duration_leer_tasks
+        )
         graph.add_node("plan", self.plan)
         graph.add_node("review", self.review)
         graph.add_node("prompt_event_creation", self.prompt_event_creation)
@@ -151,13 +153,19 @@ class Agent:
         ]
         tasks = TasksList(tasks=tasks)
         return {"tasks": tasks}
-    
+
     def get_time_duration_leer_tasks(self, state: ScheduleState) -> Dict[str, Any]:
-        regex = re.compile(r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)")
+        regex = re.compile(
+            r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+        )
         for task_list in state["tasks"].tasks:
             for task in list(task_list.values())[0]:
-                title_match = "leer" in task.title.lower() and re.search(regex, task.title)
-                notes_match = "leer" in task.notes.lower() and re.search(regex, task.notes)
+                title_match = "leer" in task.title.lower() and re.search(
+                    regex, task.title
+                )
+                notes_match = "leer" in task.notes.lower() and re.search(
+                    regex, task.notes
+                )
 
                 url = None
                 if title_match:
@@ -166,7 +174,9 @@ class Agent:
                     url = notes_match.group(0)
 
                 if url:
-                    task.duration = json.loads(get_time_read.invoke({"url": url}))["time"]
+                    task.duration = json.loads(get_time_read.invoke({"url": url}))[
+                        "time"
+                    ]
 
         return {"tasks": state["tasks"]}
 
@@ -193,8 +203,12 @@ class Agent:
             )
 
         message = self.planner.invoke(prompts)
-        return {"planning_messages": [message], "schedule": message.content, "feedback": None}
-    
+        return {
+            "planning_messages": [message],
+            "schedule": message.content,
+            "feedback": None,
+        }
+
     def review(self, state: ScheduleState) -> Dict[str, Any]:
         message = self.planner.invoke(
             [
@@ -272,7 +286,8 @@ class Agent:
 
 def run_agent() -> None:
     for event in agent.graph.stream(
-        {"messages": messages}, config={"callbacks": [langfuse_handler], "recursion_limit": 100}
+        {"messages": messages},
+        config={"callbacks": [langfuse_handler], "recursion_limit": 100},
     ):
         for v in event.values():
             if v and "messages" in v:
@@ -291,14 +306,18 @@ if __name__ == "__main__":
 
     # Initialize our LLM
     # model = ChatOllama(model="llama3.1:8b", temperature=0, max_tokens=4000)
-    model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", temperature=0, max_tokens=4000)
+    model = ChatTogether(
+        model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+        temperature=0,
+        max_tokens=4000,
+    )
 
     tools = [
         get_current_time,
         get_date_in_iso_format,
         sum_to_date,
         create_calendar_event,
-        create_calendar_events
+        create_calendar_events,
     ]
     agent = Agent(
         model,
