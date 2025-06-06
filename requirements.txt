@@ -24,6 +24,7 @@ langchain==0.3.23
 langchain-core==0.3.54
 langchain-ollama==0.3.2
 langchain-together
+langchain-community
 langchain-text-splitters==0.3.8
 langfuse==2.60.3
 langgraph==0.3.31
