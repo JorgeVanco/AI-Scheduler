@@ -30,5 +30,9 @@ jobs:
               run: |
                   echo "${{ secrets.GOOGLE_CREDENTIALS_B64 }}" | base64 -d > credentials.json
 
+            - name: Restore token.json from secret
+              run: |
+                  echo "${{ secrets.GOOGLE_TOKEN_B64 }}" | base64 -d > token.json
+
             - name: Run your Python script
               run: python -m src.agent
