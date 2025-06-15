@@ -9,12 +9,14 @@ from src.models import CalendarModel, CalendarEvent, TaskListModel, TaskModel
 
 # Agents and tools
 from langchain.tools import tool
+
 # from smolagents import tool
 
 # Google API client libraries
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
 
 timezone = pytz.timezone("Europe/Madrid")
@@ -23,25 +25,33 @@ SCOPES = [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/tasks",
 ]
+TOKEN_FILE = "token.json"
+CREDENTIALS_FILE = "credentials.json"
 
 creds = None
 
 # Check for existing token
-if os.path.exists("token.json"):
+if os.path.exists(TOKEN_FILE):
     creds = Credentials.from_authorized_user_info(
-        json.loads(open("token.json").read()), SCOPES
+        json.loads(open(TOKEN_FILE).read()), SCOPES
     )
 
 # If there are no valid credentials, authenticate
 if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    else:
-        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+    try:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+    except RefreshError as e:
+        print(f"An error occurred during authentication: {e}")
+        flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
         creds = flow.run_local_server(port=0)
+        # creds = flow.run_console()
 
     # Save credentials for next run
-    with open("token.json", "w") as token:
+    with open(TOKEN_FILE, "w") as token:
         token.write(creds.to_json())
 
 print("Authentication successful!")
@@ -50,11 +60,12 @@ print("Authentication successful!")
 calendar_service = build("calendar", "v3", credentials=creds)
 tasks_service = build("tasks", "v1", credentials=creds)
 
+
 @tool
-def create_calendar_events(calendar_events:list[dict[str, str]]):
+def create_calendar_events(calendar_events: list[dict[str, str]]):
     """Creates all new calendar events at once given in a list with the summary, start_time and end_time
 
-    Args: 
+    Args:
         calendar_events (list): List of calendar events.
             Each calendar event is a dictionary with the following attributes:
                 summary (str): Summary of the event.
@@ -68,7 +79,6 @@ def create_calendar_events(calendar_events:list[dict[str, str]]):
         created_events.append(created_event)
 
     return created_events
-    
 
 
 @tool
@@ -112,7 +122,9 @@ def list_calendars() -> List[Dict[str, Any]]:
     return calendars
 
 
-def get_calendar_events(id:str=os.getenv("CALENDAR_ID"), date:str=None) -> List[CalendarEvent]:
+def get_calendar_events(
+    id: str = os.getenv("CALENDAR_ID"), date: str = None
+) -> List[CalendarEvent]:
     """Fetch calendar events for the specified date (today by default).
 
     Args:
@@ -161,9 +173,9 @@ def list_tasks() -> List[Dict[str, Any]]:
     return tasklists
 
 
-def get_tasks(task_list_id:str="@default") -> List[Dict[str, Any]]:
+def get_tasks(task_list_id: str = "@default") -> List[Dict[str, Any]]:
     """Fetch tasks from a specific task list.
-    
+
     Args:
         task_list_id (str): The id of the task list to get the tasks from.
     """
