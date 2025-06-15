@@ -13,7 +13,7 @@ google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.1
 googleapis-common-protos==1.70.0
 greenlet==3.2.0
-h11==0.14.0
+h11==0.16.0
 httpcore==1.0.8
 httplib2==0.22.0
 httpx==0.28.1
@@ -48,7 +48,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 pytz==2025.2
 PyYAML==6.0.2
-requests==2.32.3
+requests==2.32.4
 requests-oauthlib==2.0.0
 requests-toolbelt==1.0.0
 rsa==4.9.1
