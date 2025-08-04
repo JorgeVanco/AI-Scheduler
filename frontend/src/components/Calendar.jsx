@@ -31,13 +31,15 @@ const Calendar = () => {
         const month = currentDate.getMonth();
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
         const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
+        startDate.setDate(startDate.getDate() - (firstDay.getDay() - 1 + 7) % 7);
 
         const days = [];
         const current = new Date(startDate);
 
-        for (let i = 0; i < 42; i++) {
+        const numDays = Math.ceil((daysInMonth + ((firstDay.getDay() - 1 + 7) % 7)) / 7) * 7;
+        for (let i = 0; i < numDays; i++) {
             days.push(new Date(current));
             current.setDate(current.getDate() + 1);
         }
@@ -175,7 +177,7 @@ const Calendar = () => {
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     if (view === 'day' && selectedDate) {
         const hours = generateHours();
