@@ -244,97 +244,99 @@ const Calendar = () => {
                         </div>
                     )}
 
-                    <div className="relative border rounded-lg overflow-hidden" style={{ height: '600px' }}>
-                        {/* Time labels */}
-                        <div className="absolute left-0 top-0 w-16 h-full bg-gray-50 border-r">
-                            {hours.map((hour) => (
-                                <div
-                                    key={hour}
-                                    className="absolute left-0 right-0 text-xs text-gray-600 text-right pr-2"
-                                    style={{ top: `${(hour / 24) * 100}%`, transform: 'translateY(-50%)' }}
-                                >
-                                    {formatTime(hour, 0)}
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Hour lines */}
-                        <div className="absolute left-16 right-0 top-0 h-full">
-                            {hours.map((hour) => (
-                                <div
-                                    key={hour}
-                                    className="absolute left-0 right-0 border-t border-gray-200"
-                                    style={{ top: `${(hour / 24) * 100}%` }}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Current time line */}
-                        {isSelectedDateToday && (
-                            <div
-                                className="absolute left-16 right-0 border-t-2 border-red-500 z-20 pointer-events-none"
-                                style={{ top: `${getCurrentTimePosition()}%` }}
-                            >
-                                <div className="absolute -left-16 -top-2 w-16 text-xs text-red-500 bg-white px-1 text-right pr-2">
-                                    {formatTime(currentTime.getHours(), currentTime.getMinutes())}
-                                </div>
-                                <div className="absolute -left-1 -top-1 w-2 h-2 bg-red-500 rounded-full"></div>
-                            </div>
-                        )}
-
-                        {/* Event area */}
-                        <div
-                            className="absolute left-16 right-0 top-0 h-full cursor-pointer"
-                            onClick={(e) => {
-                                if (!showEventForm) return;
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const y = e.clientY - rect.top;
-                                createEvent(y, rect.height);
-                            }}
-                            onDragOver={handleDragOver}
-                            onDrop={handleDrop}
-                        >
-                            {/* Events */}
-                            {dayEvents.map((event) => {
-                                const eventTop = getPositionFromTime(event.date.getHours(), event.date.getMinutes());
-                                const eventHeight = (event.duration / (24 * 60)) * 100;
-
-                                return (
+                    <div className="relative border rounded-lg overflow-auto" style={{ height: '600px' }}>
+                        <div className="relative" style={{ height: '1000px' }}>
+                            {/* Time labels */}
+                            <div className="absolute left-0 top-0 w-16 h-full bg-gray-50 border-r">
+                                {hours.map((hour) => (
                                     <div
-                                        key={event.id}
-                                        className="absolute left-1 right-1 bg-blue-100 border border-blue-300 rounded px-2 py-1 cursor-move z-10 hover:bg-blue-200 transition-colors"
-                                        style={{
-                                            top: `${eventTop}%`,
-                                            height: `${Math.max(eventHeight, 2)}%`,
-                                            minHeight: '24px'
-                                        }}
-                                        draggable
-                                        onDragStart={(e) => handleDragStart(e, event)}
+                                        key={hour}
+                                        className="absolute left-0 right-0 text-xs text-gray-600 text-right pr-2"
+                                        style={{ top: `${(hour / 24) * 100}%`, transform: 'translateY(-50%)' }}
                                     >
-                                        <div className="flex items-center justify-between h-full">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-blue-800 text-sm truncate">
-                                                    {event.title}
-                                                </div>
-                                                <div className="text-xs text-blue-600">
-                                                    {formatTime(event.date.getHours(), event.date.getMinutes())}
-                                                </div>
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-4 w-4 p-0 hover:bg-red-100 ml-1"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteEvent(event.id);
-                                                }}
-                                            >
-                                                <X className="h-3 w-3 text-red-600" />
-                                            </Button>
-                                        </div>
+                                        {formatTime(hour, 0)}
                                     </div>
-                                );
-                            })}
+                                ))}
+                            </div>
+
+                            {/* Hour lines */}
+                            <div className="absolute left-16 right-0 top-0 h-full">
+                                {hours.map((hour) => (
+                                    <div
+                                        key={hour}
+                                        className="absolute left-0 right-0 border-t border-gray-200"
+                                        style={{ top: `${(hour / 24) * 100}%` }}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Current time line */}
+                            {isSelectedDateToday && (
+                                <div
+                                    className="absolute left-16 right-0 border-t-2 border-red-500 z-20 pointer-events-none"
+                                    style={{ top: `${getCurrentTimePosition()}%` }}
+                                >
+                                    <div className="absolute -left-16 -top-2 w-16 text-xs text-red-500 bg-white px-1 text-right pr-2">
+                                        {formatTime(currentTime.getHours(), currentTime.getMinutes())}
+                                    </div>
+                                    <div className="absolute -left-1 -top-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                                </div>
+                            )}
+
+                            {/* Event area */}
+                            <div
+                                className="absolute left-16 right-0 top-0 h-full cursor-pointer"
+                                onClick={(e) => {
+                                    if (!showEventForm) return;
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const y = e.clientY - rect.top;
+                                    createEvent(y, rect.height);
+                                }}
+                                onDragOver={handleDragOver}
+                                onDrop={handleDrop}
+                            >
+                                {/* Events */}
+                                {dayEvents.map((event) => {
+                                    const eventTop = getPositionFromTime(event.date.getHours(), event.date.getMinutes());
+                                    const eventHeight = (event.duration / (24 * 60)) * 100;
+
+                                    return (
+                                        <div
+                                            key={event.id}
+                                            className="absolute left-1 right-1 bg-blue-100 border border-blue-300 rounded px-2 py-1 cursor-move z-10 hover:bg-blue-200 transition-colors"
+                                            style={{
+                                                top: `${eventTop}%`,
+                                                height: `${Math.max(eventHeight, 2)}%`,
+                                                minHeight: '24px'
+                                            }}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, event)}
+                                        >
+                                            <div className="flex items-center justify-between h-full">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-blue-800 text-sm truncate">
+                                                        {event.title}
+                                                    </div>
+                                                    <div className="text-xs text-blue-600">
+                                                        {formatTime(event.date.getHours(), event.date.getMinutes())}
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-4 w-4 p-0 hover:bg-red-100 ml-1"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteEvent(event.id);
+                                                    }}
+                                                >
+                                                    <X className="h-3 w-3 text-red-600" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </CardContent>
