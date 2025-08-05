@@ -34,8 +34,7 @@ const EventItem = ({
 
     const defaultStyle = {
         top: `${eventTop}%`,
-        height: `${Math.max(eventHeight, 2)}%`,
-        minHeight: '24px',
+        height: `${eventHeight}%`,
         backgroundColor: `${event.backgroundColor}20`,
         border: `1px solid ${event.backgroundColor}`,
         color: event.backgroundColor,
@@ -58,38 +57,65 @@ const EventItem = ({
         >
             <div className="flex items-center justify-between h-full">
                 <div className="flex-1 min-w-0">
-                    <div className={`font-medium text-sm truncate`}>
-                        {event.title}
-                    </div>
-                    <div className={`text-xs`}>
-                        {formatTime(event.date.getHours(), event.date.getMinutes())}
-                        {event.endDate && ` - ${formatTime(event.endDate.getHours(), event.endDate.getMinutes())}`}
-                    </div>
-                    {event.location && (
-                        <div className="text-xs text-gray-500 truncate">
-                            📍 {event.location}
+                    {duration >= 60 ? (
+                        // Standard layout for events 1 hour or longer
+                        <>
+                            <div className={`font-medium text-sm truncate`}>
+                                {event.title}
+                            </div>
+                            <div className={`text-xs`}>
+                                {formatTime(event.date.getHours(), event.date.getMinutes())}
+                                {event.endDate && ` - ${formatTime(event.endDate.getHours(), event.endDate.getMinutes())}`}
+                                {event.location && `, ${event.location}`}
+                            </div>
+                        </>
+                    ) : duration > 30 ? (
+                        // Smaller text for events between 30-60 minutes
+                        <>
+                            <div className={`font-medium text-xs truncate`}>
+                                {event.title}
+                            </div>
+                            <div className={`text-xs`} style={{ fontSize: '10px' }}>
+                                {formatTime(event.date.getHours(), event.date.getMinutes())}
+                                {event.endDate && ` - ${formatTime(event.endDate.getHours(), event.endDate.getMinutes())}`}
+                                {event.location && `, ${event.location}`}
+                            </div>
+                        </>
+                    ) : duration > 15 ? (
+                        // Single line for very short events (30 minutes or less)
+                        <div className={`text-xs truncate`}>
+                            <span className="font-medium">{event.title}</span>
+                            <span className="ml-1">
+                                {formatTime(event.date.getHours(), event.date.getMinutes())}
+                                {event.endDate && ` - ${formatTime(event.endDate.getHours(), event.endDate.getMinutes())}`}
+                            </span>
+                        </div>
+                    ) : (
+                        // Single line for very short events (30 minutes or less)
+                        <div className={`text-[8px]  truncate`}>
+                            <span className="font-small">{event.title}</span>
+                            <span className="ml-1">
+                                {formatTime(event.date.getHours(), event.date.getMinutes())}
+                                {event.endDate && ` - ${formatTime(event.endDate.getHours(), event.endDate.getMinutes())}`}
+                            </span>
                         </div>
                     )}
                 </div>
                 <div className="flex items-center gap-1 ml-1">
                     {isGoogleEvent && event.htmlLink && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-4 w-4 p-0 hover:bg-green-200"
+                        <ExternalLink
                             onClick={(e) => {
                                 e.stopPropagation();
                                 window.open(event.htmlLink, '_blank');
                             }}
-                        >
-                            <ExternalLink className="h-3 w-3" />
-                        </Button>
+                            className={`${duration > 20 ? "h-4 w-4" : "h-2 w-2"} cursor-pointer hover:opacity-50 transition-opacity`}
+                        />
                     )}
                     {!isGoogleEvent && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0 hover:bg-red-100"
+                            className="max-h-4 max-w-4 h-[1em] w-[1em] p-0 hover:bg-red-100"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 deleteEvent(event.id);

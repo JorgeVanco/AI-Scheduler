@@ -35,7 +35,7 @@ const DayView = ({
 
                     {/* Event area */}
                     <div
-                        className="absolute left-16 right-0 top-0 h-full cursor-pointer"
+                        className="absolute left-16 right-0 top-0 h-full"
                         onClick={(e) => {
                             if (!showEventForm) return;
                             const rect = e.currentTarget.getBoundingClientRect();
