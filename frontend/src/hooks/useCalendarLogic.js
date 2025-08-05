@@ -10,74 +10,183 @@ export const useCalendarLogic = () => {
     const [newEventTitle, setNewEventTitle] = useState('');
     const [draggedEvent, setDraggedEvent] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [monthlyEvents, setMonthlyEvents] = useState({});
+    const [eventsCache, setEventsCache] = useState({}); // All events indexed by date
+    const [loadedRange, setLoadedRange] = useState({ start: null, end: null });
     const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
     const { calendars, events: googleEvents } = useCalendarContext();
 
-    // Get month key for caching
-    const getMonthKey = (date) => {
-        return `${date.getFullYear()}-${date.getMonth()}`;
+    // Get date key for indexing (YYYY-MM-DD format)
+    const getDateKey = (date) => {
+        return date.toISOString().split('T')[0];
     };
 
-    // Load events for a specific month
-    const loadEventsForMonth = async (date) => {
-        const monthKey = getMonthKey(date);
-        
-        // Check if we already have events for this month
-        if (monthlyEvents[monthKey]) {
-            return monthlyEvents[monthKey];
-        }
+    // Index events by date for fast lookup
+    const indexEventsByDate = (events) => {
+        const indexed = {};
+        events.forEach(event => {
+            const startDate = new Date(event.start.dateTime || event.start.date);
+            const endDate = new Date(event.end.dateTime || event.end.date);
+            
+            // Ensure we have valid dates
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                console.warn('Invalid date in event:', event);
+                return;
+            }
+            
+            // Add event to all dates it spans
+            const current = new Date(startDate);
+            while (current <= endDate) {
+                const dateKey = getDateKey(current);
+                if (!indexed[dateKey]) {
+                    indexed[dateKey] = [];
+                }
+                // Store the original event with proper date information
+                indexed[dateKey].push({
+                    ...event,
+                    calendarId: event.calendarId,
+                    backgroundColor: event.backgroundColor,
+                    originalStart: startDate,
+                    originalEnd: endDate
+                });
+                current.setDate(current.getDate() + 1);
+                
+                // Prevent infinite loop for all-day events
+                if (current.getTime() - startDate.getTime() > 365 * 24 * 60 * 60 * 1000) {
+                    console.warn('Event spans more than a year, breaking loop:', event);
+                    break;
+                }
+            }
+        });
+        return indexed;
+    };
 
+    // Load events for a date range (optimized bulk loading)
+    const loadEventsForRange = async (startDate, endDate) => {
+        
         setIsLoadingEvents(true);
         
         try {
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            
-            // Get the first and last day of the month
-            const startDate = new Date(year, month, 1);
-            const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
-            
             const allEvents = [];
             
-            // Load events from all calendars for this month
-            for (const calendar of calendars) {
-                const response = await fetch(
-                    `/api/google/events?calendarId=${calendar.id}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
-                );
-                const data = await response.json();
+            // Load events from all calendars for the entire range
+            const loadPromises = calendars.map(async (calendar) => {
                 
-                if (data.items) {
-                    const eventsWithCalendarInfo = data.items.map(event => ({
-                        ...event,
-                        calendarId: calendar.id,
-                        backgroundColor: calendar.backgroundColor
-                    }));
-                    allEvents.push(...eventsWithCalendarInfo);
-                }
-            }
+                let allCalendarEvents = [];
+                let nextPageToken = null;
+                
+                do {
+                    const url = new URL('/api/google/events', window.location.origin);
+                    url.searchParams.set('calendarId', calendar.id);
+                    url.searchParams.set('startDate', startDate.toISOString());
+                    url.searchParams.set('endDate', endDate.toISOString());
+                    if (nextPageToken) {
+                        url.searchParams.set('pageToken', nextPageToken);
+                    }
+                    
+                    const response = await fetch(url.toString());
+                    const data = await response.json();
+                    
+                    if (data.items) {
+                        const eventsWithCalendarInfo = data.items.map(event => ({
+                            ...event,
+                            calendarId: calendar.id,
+                            backgroundColor: calendar.backgroundColor
+                        }));
+                        allCalendarEvents.push(...eventsWithCalendarInfo);
+                    }
+                    
+                    nextPageToken = data.nextPageToken;
+                    
+                } while (nextPageToken);
+                
+                return allCalendarEvents;
+            });
             
-            // Cache the events for this month
-            setMonthlyEvents(prev => ({
+            const results = await Promise.all(loadPromises);
+            results.forEach(events => allEvents.push(...events));
+            
+            
+            // Index events by date for fast access
+            const indexed = indexEventsByDate(allEvents);
+            
+            // Merge with existing cache
+            setEventsCache(prev => ({
                 ...prev,
-                [monthKey]: allEvents
+                ...indexed
             }));
             
+            // Update loaded range
+            setLoadedRange({ start: startDate, end: endDate });
+            
             setIsLoadingEvents(false);
-            return allEvents;
+            return indexed;
             
         } catch (error) {
-            console.error('Error loading events for month:', error);
+            console.error('Error loading events for range:', error);
             setIsLoadingEvents(false);
-            return [];
+            return {};
         }
     };
 
-    // Get events for the current month
-    const getCurrentMonthEvents = () => {
-        const monthKey = getMonthKey(currentDate);
-        return monthlyEvents[monthKey] || [];
+    // Get the optimal date range to load (current month ± 3 months)
+    const getOptimalRange = (centerDate = currentDate) => {
+        const start = new Date(centerDate);
+        start.setMonth(start.getMonth() - 3);
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        
+        const end = new Date(centerDate);
+        end.setMonth(end.getMonth() + 4, 0); // Last day of +3 months
+        end.setHours(23, 59, 59, 999);
+        
+        return { start, end };
+    };
+
+    // Check if we need to load more events
+    const needsEventLoading = (date) => {
+        if (!loadedRange.start || !loadedRange.end) return true;
+        
+        const checkDate = new Date(date);
+        return checkDate < loadedRange.start || checkDate > loadedRange.end;
+    };
+
+    // Get events for a specific date (fast lookup)
+    const getEventsForDate = (date) => {
+        const dateKey = getDateKey(date);
+        const googleEvents = eventsCache[dateKey] || [];
+        
+        // Parse google events but use stored original dates
+        const parsedGoogleEvents = googleEvents.map(googleEvent => {
+            const startDate = googleEvent.originalStart || new Date(googleEvent.start.dateTime || googleEvent.start.date);
+            const endDate = googleEvent.originalEnd || new Date(googleEvent.end.dateTime || googleEvent.end.date);
+            const duration = (endDate - startDate) / (1000 * 60); // duration in minutes
+            
+            return {
+                id: googleEvent.id,
+                title: googleEvent.summary || 'No title',
+                date: startDate,
+                endDate: endDate,
+                duration: duration,
+                isGoogleEvent: true,
+                htmlLink: googleEvent.htmlLink,
+                status: googleEvent.status,
+                creator: googleEvent.creator,
+                organizer: googleEvent.organizer,
+                description: googleEvent.description,
+                location: googleEvent.location,
+                backgroundColor: googleEvent.backgroundColor,
+                calendarId: googleEvent.calendarId || 'primary',
+            };
+        });
+        
+        // Add local events for the same date
+        const localEventsForDate = localEvents.filter(event =>
+            event.date.toDateString() === date.toDateString() || 
+            event.endDate?.toDateString() === date.toDateString()
+        );
+        
+        return [...parsedGoogleEvents, ...localEventsForDate];
     };
 
     // Convert Google Calendar events to internal format
@@ -103,11 +212,23 @@ export const useCalendarLogic = () => {
         };
     };
 
-    // Combine Google events with local events
+    // Combine Google events with local events (now optimized)
     const getAllEvents = () => {
-        const currentMonthGoogleEvents = getCurrentMonthEvents();
-        const parsedGoogleEvents = currentMonthGoogleEvents.map(parseGoogleEvent);
-        return [...parsedGoogleEvents, ...localEvents];
+        // Get all dates in the current month view
+        const days = generateCalendarDays();
+        const allEvents = [];
+        
+        days.forEach(date => {
+            const eventsForDate = getEventsForDate(date);
+            allEvents.push(...eventsForDate);
+        });
+        
+        // Remove duplicates by event ID
+        const uniqueEvents = allEvents.filter((event, index, self) => 
+            index === self.findIndex(e => e.id === event.id)
+        );
+        
+        return uniqueEvents;
     };
 
     // Update current time every minute
@@ -121,26 +242,22 @@ export const useCalendarLogic = () => {
     // Load events when current date changes or calendars are loaded
     useEffect(() => {
         if (calendars.length > 0) {
-            loadEventsForMonth(currentDate);
+            const { start, end } = getOptimalRange(currentDate);
+            
+            // Only load if we don't have the required range
+            if (needsEventLoading(currentDate)) {
+                loadEventsForRange(start, end);
+            }
         }
     }, [currentDate, calendars]);
 
-    // Preload adjacent months for better UX
+    // Initial load when calendars are first available
     useEffect(() => {
-        if (calendars.length > 0) {
-            const prevMonth = new Date(currentDate);
-            prevMonth.setMonth(prevMonth.getMonth() - 1);
-            
-            const nextMonth = new Date(currentDate);
-            nextMonth.setMonth(nextMonth.getMonth() + 1);
-            
-            // Preload previous and next month in background
-            setTimeout(() => {
-                loadEventsForMonth(prevMonth);
-                loadEventsForMonth(nextMonth);
-            }, 500); // Small delay to not interfere with current month loading
+        if (calendars.length > 0 && !loadedRange.start) {
+            const { start, end } = getOptimalRange(currentDate);
+            loadEventsForRange(start, end);
         }
-    }, [currentDate, calendars]);
+    }, [calendars]);
 
     // Generate calendar days for month view
     const generateCalendarDays = () => {
@@ -221,8 +338,11 @@ export const useCalendarLogic = () => {
         newDate.setMonth(newDate.getMonth() + direction);
         setCurrentDate(newDate);
         
-        // Load events for the new month if not already cached
-        await loadEventsForMonth(newDate);
+        // Check if we need to load more events for the new date
+        if (needsEventLoading(newDate)) {
+            const { start, end } = getOptimalRange(newDate);
+            await loadEventsForRange(start, end);
+        }
     };
 
     const navigateDay = (direction) => {
@@ -287,14 +407,6 @@ export const useCalendarLogic = () => {
         setDraggedEvent(null);
     };
 
-    const getEventsForDate = (date) => {
-        const allEvents = getAllEvents();
-        return allEvents.filter(event =>
-            event.date.toDateString() === date.toDateString() || 
-            event.endDate?.toDateString() === date.toDateString()
-        );
-    };
-
     const deleteEvent = (eventId) => {
         // Only allow deleting local events
         setLocalEvents(localEvents.filter(event => event.id !== eventId));
@@ -310,7 +422,8 @@ export const useCalendarLogic = () => {
         newEventTitle,
         draggedEvent,
         currentTime,
-        monthlyEvents,
+        eventsCache,
+        loadedRange,
         isLoadingEvents,
         
         // Setters
@@ -326,8 +439,9 @@ export const useCalendarLogic = () => {
         // Functions
         parseGoogleEvent,
         getAllEvents,
-        loadEventsForMonth,
-        getCurrentMonthEvents,
+        loadEventsForRange,
+        getEventsForDate,
+        needsEventLoading,
         generateCalendarDays,
         isToday,
         isSameMonth,
@@ -344,7 +458,6 @@ export const useCalendarLogic = () => {
         handleDragStart,
         handleDragOver,
         handleDrop,
-        getEventsForDate,
         deleteEvent
     };
 };
