@@ -4,18 +4,50 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, ExternalLink } from 'lucide-react';
+import { useCalendarContext } from '@/context/calendarContext';
 
 const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(null);
     const [view, setView] = useState('month'); // 'month' or 'day'
-    const [events, setEvents] = useState([]);
+    const [localEvents, setLocalEvents] = useState([]);
     const [showEventForm, setShowEventForm] = useState(false);
     const [newEventTitle, setNewEventTitle] = useState('');
     const [draggedEvent, setDraggedEvent] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
     const dayViewRef = useRef(null);
+
+    const { events: googleEvents } = useCalendarContext();
+
+    // Convert Google Calendar events to internal format
+    const parseGoogleEvent = (googleEvent) => {
+        const startDate = new Date(googleEvent.start.dateTime || googleEvent.start.date);
+        const endDate = new Date(googleEvent.end.dateTime || googleEvent.end.date);
+        const duration = (endDate - startDate) / (1000 * 60); // duration in minutes
+        return {
+            id: googleEvent.id,
+            title: googleEvent.summary || 'No title',
+            date: startDate,
+            endDate: endDate,
+            duration: duration,
+            isGoogleEvent: true,
+            htmlLink: googleEvent.htmlLink,
+            status: googleEvent.status,
+            creator: googleEvent.creator,
+            organizer: googleEvent.organizer,
+            description: googleEvent.description,
+            location: googleEvent.location,
+            backgroundColor: googleEvent.backgroundColor,
+            calendarId: googleEvent.calendarId || 'primary',
+        };
+    };
+
+    // Combine Google events with local events
+    const getAllEvents = () => {
+        const parsedGoogleEvents = googleEvents.map(parseGoogleEvent);
+        return [...parsedGoogleEvents, ...localEvents];
+    };
 
     // Update current time every minute
     useEffect(() => {
@@ -114,15 +146,21 @@ const Calendar = () => {
             id: Date.now(),
             title: newEventTitle,
             date: eventDate,
-            duration: 60 // minutes
+            duration: 60, // minutes
+            isGoogleEvent: false
         };
 
-        setEvents([...events, newEvent]);
+        setLocalEvents([...localEvents, newEvent]);
         setNewEventTitle('');
         setShowEventForm(false);
     };
 
     const handleDragStart = (e, event) => {
+        // Only allow dragging of local events, not Google events
+        if (event.isGoogleEvent) {
+            e.preventDefault();
+            return;
+        }
         setDraggedEvent(event);
         e.dataTransfer.effectAllowed = 'move';
     };
@@ -134,13 +172,13 @@ const Calendar = () => {
 
     const handleDrop = (e) => {
         e.preventDefault();
-        if (!draggedEvent) return;
+        if (!draggedEvent || draggedEvent.isGoogleEvent) return;
 
         const rect = e.currentTarget.getBoundingClientRect();
         const y = e.clientY - rect.top;
         const { hour, minute } = getTimeFromPosition(y, rect.height);
 
-        const updatedEvents = events.map(event => {
+        const updatedEvents = localEvents.map(event => {
             if (event.id === draggedEvent.id) {
                 const newDate = new Date(selectedDate);
                 newDate.setHours(hour, minute, 0, 0);
@@ -149,27 +187,20 @@ const Calendar = () => {
             return event;
         });
 
-        setEvents(updatedEvents);
+        setLocalEvents(updatedEvents);
         setDraggedEvent(null);
     };
 
     const getEventsForDate = (date) => {
-        return events.filter(event =>
+        const allEvents = getAllEvents();
+        return allEvents.filter(event =>
             event.date.toDateString() === date.toDateString()
         );
     };
 
-    const getEventForTimeSlot = (date, hour, minute) => {
-        return events.find(event => {
-            const eventDate = event.date;
-            return eventDate.toDateString() === date.toDateString() &&
-                eventDate.getHours() === hour &&
-                eventDate.getMinutes() === minute;
-        });
-    };
-
     const deleteEvent = (eventId) => {
-        setEvents(events.filter(event => event.id !== eventId));
+        // Only allow deleting local events
+        setLocalEvents(localEvents.filter(event => event.id !== eventId));
     };
 
     const monthNames = [
@@ -220,7 +251,7 @@ const Calendar = () => {
                         className="flex items-center gap-1"
                     >
                         <Plus className="h-4 w-4" />
-                        Event
+                        Local Event
                     </Button>
                 </CardHeader>
 
@@ -300,42 +331,76 @@ const Calendar = () => {
                                 onDrop={handleDrop}
                             >
                                 {/* Events */}
-                                {dayEvents.map((event) => {
+                                {dayEvents.map((event, eventIndex) => {
                                     const eventTop = getPositionFromTime(event.date.getHours(), event.date.getMinutes());
                                     const eventHeight = (event.duration / (24 * 60)) * 100;
+                                    const isGoogleEvent = event.isGoogleEvent;
 
                                     return (
                                         <div
-                                            key={event.id}
-                                            className="absolute left-1 right-1 bg-blue-100 border border-blue-300 rounded px-2 py-1 cursor-move z-10 hover:bg-blue-200 transition-colors"
+                                            key={`${event.id}-${eventIndex}`}
                                             style={{
                                                 top: `${eventTop}%`,
                                                 height: `${Math.max(eventHeight, 2)}%`,
-                                                minHeight: '24px'
+                                                minHeight: '24px',
+                                                backgroundColor: `${event.backgroundColor}20`,
+                                                border: `1px solid ${event.backgroundColor}`,
+                                                color: event.backgroundColor
                                             }}
-                                            draggable
+                                            className={`
+                                                absolute left-1 right-1 border rounded px-2 py-1 z-10 transition-colors
+                                                ${isGoogleEvent
+                                                    ? 'bg-green-100'
+                                                    : 'bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-move'
+                                                }
+                                            `}
+
+                                            draggable={!isGoogleEvent}
                                             onDragStart={(e) => handleDragStart(e, event)}
                                         >
                                             <div className="flex items-center justify-between h-full">
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-blue-800 text-sm truncate">
+                                                    <div className={`font-medium text-sm truncate`}>
                                                         {event.title}
                                                     </div>
-                                                    <div className="text-xs text-blue-600">
+                                                    <div className={`text-xs`}>
                                                         {formatTime(event.date.getHours(), event.date.getMinutes())}
+                                                        {event.endDate && ` - ${formatTime(event.endDate.getHours(), event.endDate.getMinutes())}`}
                                                     </div>
+                                                    {event.location && (
+                                                        <div className="text-xs text-gray-500 truncate">
+                                                            📍 {event.location}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-4 w-4 p-0 hover:bg-red-100 ml-1"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        deleteEvent(event.id);
-                                                    }}
-                                                >
-                                                    <X className="h-3 w-3 text-red-600" />
-                                                </Button>
+                                                <div className="flex items-center gap-1 ml-1">
+                                                    {isGoogleEvent && event.htmlLink && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-4 w-4 p-0 hover:bg-green-200"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                window.open(event.htmlLink, '_blank');
+                                                            }}
+                                                        >
+                                                            <ExternalLink className="h-3 w-3" />
+                                                        </Button>
+                                                    )}
+                                                    {!isGoogleEvent && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-4 w-4 p-0 hover:bg-red-100"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                deleteEvent(event.id);
+                                                            }}
+                                                        >
+                                                            <X className="h-3 w-3 text-red-600" />
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -364,6 +429,16 @@ const Calendar = () => {
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
+                <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
+                        <span>Google Events</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
+                        <span>Local Events</span>
+                    </div>
+                </div>
             </CardHeader>
 
             <CardContent>
@@ -387,17 +462,17 @@ const Calendar = () => {
                             <div
                                 key={index}
                                 className={`
-                  relative min-h-[100px] p-2 border rounded-lg cursor-pointer
-                  hover:bg-gray-50 transition-colors
-                  ${isCurrentMonth ? 'bg-white' : 'bg-gray-100 text-gray-400'}
-                `}
+                                    relative min-h-[100px] p-2 border rounded-lg cursor-pointer
+                                    hover:bg-gray-50 transition-colors
+                                    ${isCurrentMonth ? 'bg-white' : 'bg-gray-100 text-gray-400'}
+                                `}
                                 onClick={() => handleDateClick(date)}
                             >
                                 <div className="grid grid-cols-1 place-items-center mb-2">
                                     <span className={`
-                    text-sm font-medium z-10 col-start-1 row-start-1
-                    ${isCurrentDay ? 'text-blue-500' : ''}
-                  `}>
+                                        text-sm font-medium z-10 col-start-1 row-start-1
+                                        ${isCurrentDay ? 'text-blue-500' : ''}
+                                    `}>
                                         {date.getDate()}
                                     </span>
                                     {isCurrentDay && (
@@ -410,12 +485,18 @@ const Calendar = () => {
                                 <div className="mt-1 space-y-1">
                                     {dayEvents.slice(0, 2).map((event, eventIndex) => (
                                         <div
-                                            key={event.id}
-                                            className="text-xs bg-blue-100 text-blue-800 px-1 py-0.5 rounded truncate"
+                                            key={`${event.id}-${eventIndex}`}
+                                            style={{ backgroundColor: `${event.backgroundColor}20`, border: `1px solid ${event.backgroundColor}`, color: event.backgroundColor }}
+
+                                            className={`text-xs px-1 py-0.5 rounded truncate ${event.isGoogleEvent
+                                                ? 'text-white'
+                                                : 'text-blue-800'
+                                                }`}
                                         >
                                             {event.title}
                                         </div>
-                                    ))}
+                                    )
+                                    )}
                                     {dayEvents.length > 2 && (
                                         <div className="text-xs text-gray-500">
                                             +{dayEvents.length - 2} more

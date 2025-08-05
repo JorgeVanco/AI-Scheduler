@@ -7,6 +7,8 @@ interface CalendarContextType {
     setCalendars: (calendars: any[]) => void;
     tasks: any[];
     setTasks: (tasks: any[]) => void;
+    events: any[];
+    setEvents: (events: any[]) => void;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
@@ -14,11 +16,14 @@ const CalendarContext = createContext<CalendarContextType | undefined>(undefined
 export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     const [calendars, setCalendars] = useState<any[]>([]);
     const [tasks, setTasks] = useState<any[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
+    const [hasFetched, setHasFetched] = useState(false);
 
     const { data: session } = useSession();
 
     useEffect(() => {
-        if (session?.accessToken) {
+        if (session?.accessToken && !hasFetched) {
+            setHasFetched(true);
             fetch('/api/google/calendars')
                 .then((res) => res.json())
                 .then((data) => {
@@ -31,6 +36,22 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                             return a.summary.localeCompare(b.summary);
                         });
                         setCalendars(sortedCalendars);
+                        setEvents([]);
+                        sortedCalendars.forEach((calendar: any) => {
+                            fetch(`/api/google/events?calendarId=${calendar.id}`)
+                                .then((res) => res.json())
+                                .then((data) => {
+                                    if (data.items) {
+                                        data.items.forEach((event: any) => {
+                                            event.calendarId = calendar.id;
+                                            event.backgroundColor = calendar.backgroundColor;
+                                        });
+                                        setEvents(prevEvents => [...prevEvents, ...data.items]);
+                                    } else {
+                                        console.error('Error fetching events:', data.error);
+                                    }
+                                });
+                        });
                         console.log('Calendars:', sortedCalendars);
                     } else {
                         console.error('Error:', data.error);
@@ -47,10 +68,10 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                     }
                 });
         }
-    }, [session]);
+    }, [session, hasFetched]);
 
     return (
-        <CalendarContext.Provider value={{ calendars, setCalendars, tasks, setTasks }}>
+        <CalendarContext.Provider value={{ calendars, setCalendars, tasks, setTasks, events, setEvents }}>
             {children}
         </CalendarContext.Provider>
     );
