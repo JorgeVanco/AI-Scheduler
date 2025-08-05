@@ -2,6 +2,7 @@
 
 import { signIn, signOut, useSession } from "next-auth/react";
 import Calendar from "@/components/Calendar";
+
 export default function Home() {
 
   const { data: session } = useSession();
