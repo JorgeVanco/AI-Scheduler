@@ -9,6 +9,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const calendarId = searchParams.get('calendarId') || 'primary';
 
+    const midNight = new Date(new Date().setHours(0, 0, 0, 0));
+    const startDate = searchParams.get('startDate') || midNight.toISOString();
+    const endDate = searchParams.get('endDate') || new Date(midNight.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
     if (!session?.accessToken) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -21,7 +25,8 @@ export async function GET(req: NextRequest) {
     try {
         const res = await calendar.events.list({
             calendarId: calendarId,
-            timeMin: new Date().toISOString(),
+            timeMin: startDate,
+            timeMax: endDate,
             maxResults: 10,
             singleEvents: true,
             orderBy: 'startTime',
