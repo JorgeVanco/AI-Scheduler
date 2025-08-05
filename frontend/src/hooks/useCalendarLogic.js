@@ -149,13 +149,18 @@ export const useCalendarLogic = () => {
         if (!loadedRange.start || !loadedRange.end) return true;
         
         const checkDate = new Date(date);
-        return checkDate < loadedRange.start || checkDate > loadedRange.end;
+        const startWithMargin = new Date(loadedRange.start);
+        startWithMargin.setMonth(startWithMargin.getMonth() + 1);
+        
+        const endWithMargin = new Date(loadedRange.end);
+        endWithMargin.setMonth(endWithMargin.getMonth() - 1);
+        
+        return checkDate < startWithMargin || checkDate > endWithMargin;
     };
 
     // Get events for a specific date (fast lookup)
     const getEventsForDate = (date) => {
         const dateKey = getDateKey(date);
-        console.log({date, dateKey})
         const googleEvents = eventsCache[dateKey] || [];
         
         // Parse google events but use stored original dates
