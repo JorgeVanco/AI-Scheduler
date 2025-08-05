@@ -84,6 +84,7 @@ export default function CalendarList({ calendars }: { calendars: any[] }) {
                                                     <Checkbox
                                                         style={{ '--primary': calendar.backgroundColor, borderColor: calendar.backgroundColor, accentColor: calendar.backgroundColor } as React.CSSProperties}
                                                         className="border-2 cursor-pointer"
+                                                        defaultChecked={calendar.selected}
                                                         onCheckedChange={(checked) => {
                                                             return checked
                                                                 ? field.onChange([...field.value, calendar.id])

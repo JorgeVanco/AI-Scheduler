@@ -23,8 +23,15 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.items) {
-                        setCalendars(data.items);
-                        console.log('Calendars:', data.items);
+                        const sortedCalendars = data.items.sort((a: any, b: any) => {
+                            if (a.primary && !b.primary) return -1;
+                            if (!a.primary && b.primary) return 1;
+                            if (a.accessRole === 'owner' && b.accessRole !== 'owner') return -1;
+                            if (b.accessRole === 'owner' && a.accessRole !== 'owner') return 1;
+                            return a.summary.localeCompare(b.summary);
+                        });
+                        setCalendars(sortedCalendars);
+                        console.log('Calendars:', sortedCalendars);
                     } else {
                         console.error('Error:', data.error);
                     }
