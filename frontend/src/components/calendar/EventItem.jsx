@@ -17,7 +17,10 @@ const EventItem = ({
     let eventTop;
     let duration;
 
-    if (event.date.getDate() !== selectedDate.getDate()) {
+    if (event.isAllDayEvent && event.date.getDate() === selectedDate.getDate()) {
+        eventTop = 'auto';
+        duration = 30;
+    } else if (event.date.getDate() !== selectedDate.getDate()) {
         eventTop = 0;
         duration = event.endDate.getHours() * 60 + event.endDate.getMinutes();
     } else {
@@ -29,12 +32,23 @@ const EventItem = ({
         }
     }
 
-    const eventHeight = (duration / (24 * 60)) * 100;
+    const eventHeight = event.isAllDayEvent
+        ? (style.height || '20px')
+        : `${(duration / (24 * 60)) * 100}%`;
+
     const isGoogleEvent = event.isGoogleEvent;
 
-    const defaultStyle = {
+    const defaultStyle = event.isAllDayEvent ? {
+        // All-day event styles
+        backgroundColor: `${event.backgroundColor}40`,
+        border: `1px solid ${event.backgroundColor}`,
+        color: event.backgroundColor,
+        borderRadius: '4px',
+        ...style
+    } : {
+        // Timed event styles
         top: `${eventTop}%`,
-        height: `${eventHeight}%`,
+        height: `${eventHeight}`,
         backgroundColor: `${event.backgroundColor}20`,
         border: `1px solid ${event.backgroundColor}`,
         color: event.backgroundColor,
@@ -46,18 +60,35 @@ const EventItem = ({
             key={`${event.id}-${eventIndex}`}
             style={defaultStyle}
             className={`
-                absolute left-1 right-1 border rounded px-2 py-1 z-10 transition-colors
+                ${event.isAllDayEvent
+                    ? 'flex items-center px-2 py-1 text-xs font-medium truncate'
+                    : 'absolute left-1 right-1 border rounded px-2 py-1 z-10 transition-colors'
+                }
                 ${isGoogleEvent
-                    ? 'bg-green-100'
-                    : 'bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-move'
+                    ? event.isAllDayEvent
+                        ? 'bg-opacity-60'
+                        : 'bg-green-100'
+                    : event.isAllDayEvent
+                        ? 'bg-opacity-60 hover:bg-opacity-80 cursor-move'
+                        : 'bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-move'
                 }
             `}
             draggable={!isGoogleEvent}
             onDragStart={(e) => handleDragStart(e, event)}
         >
-            <div className="flex items-center justify-between h-full">
+            <div className="flex items-center justify-between h-full w-full">
                 <div className="flex-1 min-w-0">
-                    {duration >= 60 ? (
+                    {event.isAllDayEvent ? (
+                        // All-day event layout - simple and compact
+                        <div className="flex items-center">
+                            <span className="font-medium truncate">{event.title}</span>
+                            {event.location && (
+                                <span className="ml-2 text-opacity-70 truncate">
+                                    {event.location}
+                                </span>
+                            )}
+                        </div>
+                    ) : duration >= 60 ? (
                         // Standard layout for events 1 hour or longer
                         <>
                             <div className={`font-medium text-sm truncate`}>
@@ -92,7 +123,7 @@ const EventItem = ({
                         </div>
                     ) : (
                         // Single line for very short events (15 minutes or less)
-                        <div className={`text-[8px]  truncate`}>
+                        <div className={`text-[8px] truncate`}>
                             <span className="font-small">{event.title}</span>
                             <span className="ml-1">
                                 {formatTime(event.date.getHours(), event.date.getMinutes())}

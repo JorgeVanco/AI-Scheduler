@@ -21,8 +21,44 @@ const DayView = ({
     handleDragStart,
     deleteEvent
 }) => {
+    // Separate all-day events from timed events
+    const allDayEvents = dayEvents.filter(event => event.isAllDayEvent && event.date.getDate() === selectedDate.getDate());
+    const timedEvents = dayEvents.filter(event => !event.isAllDayEvent);
+
     return (
         <CardContent>
+            {/* All-day events section */}
+            {allDayEvents.length > 0 && (
+                <div>
+                    <div className="pl-16 pr-4">
+                        {allDayEvents.map((event, eventIndex) => (
+                            <div
+                                key={`allday-${event.id}-${eventIndex}`}
+                                className="relative mb-1"
+                            >
+                                <EventItem
+                                    event={event}
+                                    eventIndex={eventIndex}
+                                    selectedDate={selectedDate}
+                                    getPositionFromTime={getPositionFromTime}
+                                    handleDragStart={handleDragStart}
+                                    deleteEvent={deleteEvent}
+                                    formatTime={formatTime}
+                                    style={{
+                                        position: 'relative',
+                                        height: '20px',
+                                        left: 'auto',
+                                        right: 'auto',
+                                        width: '100%'
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Timed events section */}
             <div className="relative border rounded-lg overflow-auto" style={{ height: '600px' }}>
                 <div className="relative" style={{ height: '1000px' }}>
                     <Timeline
@@ -45,10 +81,10 @@ const DayView = ({
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                     >
-                        {/* Events */}
-                        {dayEvents.map((event, eventIndex) => (
+                        {/* Timed Events */}
+                        {timedEvents.map((event, eventIndex) => (
                             <EventItem
-                                key={`${event.id}-${eventIndex}`}
+                                key={`timed-${event.id}-${eventIndex}`}
                                 event={event}
                                 eventIndex={eventIndex}
                                 selectedDate={selectedDate}

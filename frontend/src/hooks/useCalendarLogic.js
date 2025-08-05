@@ -53,6 +53,9 @@ export const useCalendarLogic = () => {
                 current.setDate(current.getDate() + 1);
                 
                 // Prevent infinite loop for all-day events
+                if (event.start.dateTime === undefined && event.end.dateTime === undefined) {
+                    break;
+                }
                 if (current.getTime() - startDate.getTime() > 365 * 24 * 60 * 60 * 1000) {
                     console.warn('Event spans more than a year, breaking loop:', event);
                     break;
@@ -179,12 +182,14 @@ export const useCalendarLogic = () => {
     const parseGoogleEvent = (googleEvent) => {
         const startDate = new Date(googleEvent.start.dateTime || googleEvent.start.date);
         const endDate = new Date(googleEvent.end.dateTime || googleEvent.end.date);
+        const isAllDayEvent = googleEvent.start.dateTime === undefined && googleEvent.end.dateTime === undefined;
         const duration = (endDate - startDate) / (1000 * 60); // duration in minutes
         return {
             id: googleEvent.id,
             title: googleEvent.summary || 'No title',
             date: startDate,
             endDate: endDate,
+            isAllDayEvent: isAllDayEvent,
             duration: duration,
             isGoogleEvent: true,
             htmlLink: googleEvent.htmlLink,
