@@ -193,8 +193,9 @@ const Calendar = () => {
 
     const getEventsForDate = (date) => {
         const allEvents = getAllEvents();
+        console.log('All events:', allEvents[0]);
         return allEvents.filter(event =>
-            event.date.toDateString() === date.toDateString()
+            event.date.toDateString() === date.toDateString() || event.endDate?.toDateString() === date.toDateString()
         );
     };
 
@@ -332,8 +333,21 @@ const Calendar = () => {
                             >
                                 {/* Events */}
                                 {dayEvents.map((event, eventIndex) => {
-                                    const eventTop = getPositionFromTime(event.date.getHours(), event.date.getMinutes());
-                                    const eventHeight = (event.duration / (24 * 60)) * 100;
+
+                                    let eventTop;
+                                    let duration;
+                                    if (event.date.getDate() !== selectedDate.getDate()) {
+                                        eventTop = 0;
+                                        duration = event.endDate.getHours() * 60 + event.endDate.getMinutes();
+                                    } else {
+                                        eventTop = getPositionFromTime(event.date.getHours(), event.date.getMinutes());
+                                        if (event.endDate.getDate() !== selectedDate.getDate()) {
+                                            duration = (24 * 60 - (event.date.getHours() * 60 + event.date.getMinutes()));
+                                        } else {
+                                            duration = event.duration;
+                                        }
+                                    }
+                                    const eventHeight = (duration / (24 * 60)) * 100;
                                     const isGoogleEvent = event.isGoogleEvent;
 
                                     return (
