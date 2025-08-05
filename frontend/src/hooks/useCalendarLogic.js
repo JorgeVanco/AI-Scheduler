@@ -18,7 +18,10 @@ export const useCalendarLogic = () => {
 
     // Get date key for indexing (YYYY-MM-DD format)
     const getDateKey = (date) => {
-        return date.toISOString().split('T')[0];
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
 
     // Index events by date for fast lookup
@@ -46,8 +49,6 @@ export const useCalendarLogic = () => {
                     ...event,
                     calendarId: event.calendarId,
                     backgroundColor: event.backgroundColor,
-                    originalStart: startDate,
-                    originalEnd: endDate
                 });
                 current.setDate(current.getDate() + 1);
                 
@@ -154,31 +155,11 @@ export const useCalendarLogic = () => {
     // Get events for a specific date (fast lookup)
     const getEventsForDate = (date) => {
         const dateKey = getDateKey(date);
+        console.log({date, dateKey})
         const googleEvents = eventsCache[dateKey] || [];
         
         // Parse google events but use stored original dates
-        const parsedGoogleEvents = googleEvents.map(googleEvent => {
-            const startDate = googleEvent.originalStart || new Date(googleEvent.start.dateTime || googleEvent.start.date);
-            const endDate = googleEvent.originalEnd || new Date(googleEvent.end.dateTime || googleEvent.end.date);
-            const duration = (endDate - startDate) / (1000 * 60); // duration in minutes
-            
-            return {
-                id: googleEvent.id,
-                title: googleEvent.summary || 'No title',
-                date: startDate,
-                endDate: endDate,
-                duration: duration,
-                isGoogleEvent: true,
-                htmlLink: googleEvent.htmlLink,
-                status: googleEvent.status,
-                creator: googleEvent.creator,
-                organizer: googleEvent.organizer,
-                description: googleEvent.description,
-                location: googleEvent.location,
-                backgroundColor: googleEvent.backgroundColor,
-                calendarId: googleEvent.calendarId || 'primary',
-            };
-        });
+        const parsedGoogleEvents = googleEvents.map(googleEvent => parseGoogleEvent(googleEvent));
         
         // Add local events for the same date
         const localEventsForDate = localEvents.filter(event =>
