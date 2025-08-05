@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
             calendarId: calendarId,
             timeMin: startDate,
             timeMax: endDate,
-            maxResults: 10,
             singleEvents: true,
             orderBy: 'startTime',
         });

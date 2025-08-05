@@ -10,8 +10,75 @@ export const useCalendarLogic = () => {
     const [newEventTitle, setNewEventTitle] = useState('');
     const [draggedEvent, setDraggedEvent] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [monthlyEvents, setMonthlyEvents] = useState({});
+    const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
-    const { events: googleEvents } = useCalendarContext();
+    const { calendars, events: googleEvents } = useCalendarContext();
+
+    // Get month key for caching
+    const getMonthKey = (date) => {
+        return `${date.getFullYear()}-${date.getMonth()}`;
+    };
+
+    // Load events for a specific month
+    const loadEventsForMonth = async (date) => {
+        const monthKey = getMonthKey(date);
+        
+        // Check if we already have events for this month
+        if (monthlyEvents[monthKey]) {
+            return monthlyEvents[monthKey];
+        }
+
+        setIsLoadingEvents(true);
+        
+        try {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            
+            // Get the first and last day of the month
+            const startDate = new Date(year, month, 1);
+            const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            
+            const allEvents = [];
+            
+            // Load events from all calendars for this month
+            for (const calendar of calendars) {
+                const response = await fetch(
+                    `/api/google/events?calendarId=${calendar.id}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+                );
+                const data = await response.json();
+                
+                if (data.items) {
+                    const eventsWithCalendarInfo = data.items.map(event => ({
+                        ...event,
+                        calendarId: calendar.id,
+                        backgroundColor: calendar.backgroundColor
+                    }));
+                    allEvents.push(...eventsWithCalendarInfo);
+                }
+            }
+            
+            // Cache the events for this month
+            setMonthlyEvents(prev => ({
+                ...prev,
+                [monthKey]: allEvents
+            }));
+            
+            setIsLoadingEvents(false);
+            return allEvents;
+            
+        } catch (error) {
+            console.error('Error loading events for month:', error);
+            setIsLoadingEvents(false);
+            return [];
+        }
+    };
+
+    // Get events for the current month
+    const getCurrentMonthEvents = () => {
+        const monthKey = getMonthKey(currentDate);
+        return monthlyEvents[monthKey] || [];
+    };
 
     // Convert Google Calendar events to internal format
     const parseGoogleEvent = (googleEvent) => {
@@ -38,7 +105,8 @@ export const useCalendarLogic = () => {
 
     // Combine Google events with local events
     const getAllEvents = () => {
-        const parsedGoogleEvents = googleEvents.map(parseGoogleEvent);
+        const currentMonthGoogleEvents = getCurrentMonthEvents();
+        const parsedGoogleEvents = currentMonthGoogleEvents.map(parseGoogleEvent);
         return [...parsedGoogleEvents, ...localEvents];
     };
 
@@ -49,6 +117,30 @@ export const useCalendarLogic = () => {
         }, 60000);
         return () => clearInterval(timer);
     }, []);
+
+    // Load events when current date changes or calendars are loaded
+    useEffect(() => {
+        if (calendars.length > 0) {
+            loadEventsForMonth(currentDate);
+        }
+    }, [currentDate, calendars]);
+
+    // Preload adjacent months for better UX
+    useEffect(() => {
+        if (calendars.length > 0) {
+            const prevMonth = new Date(currentDate);
+            prevMonth.setMonth(prevMonth.getMonth() - 1);
+            
+            const nextMonth = new Date(currentDate);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            
+            // Preload previous and next month in background
+            setTimeout(() => {
+                loadEventsForMonth(prevMonth);
+                loadEventsForMonth(nextMonth);
+            }, 500); // Small delay to not interfere with current month loading
+        }
+    }, [currentDate, calendars]);
 
     // Generate calendar days for month view
     const generateCalendarDays = () => {
@@ -124,10 +216,13 @@ export const useCalendarLogic = () => {
         setSelectedDate(null);
     };
 
-    const navigateMonth = (direction) => {
+    const navigateMonth = async (direction) => {
         const newDate = new Date(currentDate);
         newDate.setMonth(newDate.getMonth() + direction);
         setCurrentDate(newDate);
+        
+        // Load events for the new month if not already cached
+        await loadEventsForMonth(newDate);
     };
 
     const navigateDay = (direction) => {
@@ -215,6 +310,8 @@ export const useCalendarLogic = () => {
         newEventTitle,
         draggedEvent,
         currentTime,
+        monthlyEvents,
+        isLoadingEvents,
         
         // Setters
         setCurrentDate,
@@ -229,6 +326,8 @@ export const useCalendarLogic = () => {
         // Functions
         parseGoogleEvent,
         getAllEvents,
+        loadEventsForMonth,
+        getCurrentMonthEvents,
         generateCalendarDays,
         isToday,
         isSameMonth,
