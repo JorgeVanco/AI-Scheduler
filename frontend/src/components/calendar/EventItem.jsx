@@ -69,8 +69,8 @@ const EventItem = ({
                                 {event.location && `, ${event.location}`}
                             </div>
                         </>
-                    ) : duration > 30 ? (
-                        // Smaller text for events between 30-60 minutes
+                    ) : duration > 40 ? (
+                        // Smaller text for events between 40-60 minutes
                         <>
                             <div className={`font-medium text-xs truncate`}>
                                 {event.title}
@@ -82,7 +82,7 @@ const EventItem = ({
                             </div>
                         </>
                     ) : duration > 15 ? (
-                        // Single line for very short events (30 minutes or less)
+                        // Single line for very short events (30 minutes to 15 minutes)
                         <div className={`text-xs truncate`}>
                             <span className="font-medium">{event.title}</span>
                             <span className="ml-1">
@@ -91,7 +91,7 @@ const EventItem = ({
                             </span>
                         </div>
                     ) : (
-                        // Single line for very short events (30 minutes or less)
+                        // Single line for very short events (15 minutes or less)
                         <div className={`text-[8px]  truncate`}>
                             <span className="font-small">{event.title}</span>
                             <span className="ml-1">
