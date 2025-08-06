@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Calendar from "@/components/Calendar";
 import { useCalendarContext } from "@/context/calendarContext";
@@ -11,6 +12,12 @@ export default function Home() {
 
   const { data: session } = useSession();
   const { calendars, tasks } = useCalendarContext();
+
+  useEffect(() => {
+    if ((session as any)?.error === "RefreshAccessTokenError") {
+      signIn(); // Force sign in to hopefully resolve error
+    }
+  }, [session]);
 
   return (
     <div>
