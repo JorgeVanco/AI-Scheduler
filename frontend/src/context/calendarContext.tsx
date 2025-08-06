@@ -11,7 +11,8 @@ interface CalendarContextType {
     setEvents: (events: any[]) => void;
     selectedCalendarIds: Set<string>;
     setSelectedCalendarIds: (ids: Set<string>) => void;
-    toggleCalendar: (calendarId: string) => void;
+    toggleCalendar: (calendarId: string) => Promise<void>;
+    updateCalendarSelected: (calendarId: string, selected: boolean) => Promise<void>;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
@@ -83,16 +84,44 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [calendars]);
 
-    const toggleCalendar = (calendarId: string) => {
+    const updateCalendarSelected = async (calendarId: string, selected: boolean) => {
+        try {
+            const response = await fetch(`/api/google/calendars/${calendarId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ selected })
+            });
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                console.error('Failed to update calendar selected state:', responseData);
+            }
+
+        } catch (error) {
+            console.error('Error updating calendar:', error);
+        }
+    };
+
+    const toggleCalendar = async (calendarId: string) => {
+        const wasSelected = selectedCalendarIds.has(calendarId);
+        const willBeSelected = !wasSelected;
+
+        // Actualizar el estado local primero para una mejor UX
         setSelectedCalendarIds(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(calendarId)) {
+            if (wasSelected) {
                 newSet.delete(calendarId);
             } else {
                 newSet.add(calendarId);
             }
             return newSet;
         });
+
+        await updateCalendarSelected(calendarId, willBeSelected);
+
     }
 
     return (
@@ -105,7 +134,8 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
             setEvents,
             selectedCalendarIds,
             setSelectedCalendarIds,
-            toggleCalendar
+            toggleCalendar,
+            updateCalendarSelected
         }}>
             {children}
         </CalendarContext.Provider>
