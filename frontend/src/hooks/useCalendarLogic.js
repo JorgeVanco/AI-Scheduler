@@ -14,7 +14,7 @@ export const useCalendarLogic = () => {
     const [loadedRange, setLoadedRange] = useState({ start: null, end: null });
     const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
-    const { calendars, events: googleEvents } = useCalendarContext();
+    const { calendars, selectedCalendarIds } = useCalendarContext();
 
     // Get date key for indexing (YYYY-MM-DD format)
     const getDateKey = (date) => {
@@ -165,10 +165,14 @@ export const useCalendarLogic = () => {
     const getEventsForDate = (date) => {
         const dateKey = getDateKey(date);
         const googleEvents = eventsCache[dateKey] || [];
-        
+
+        const filteredGoogleEvents = googleEvents.filter(event =>
+            selectedCalendarIds.has(event.calendarId)
+        );
+
         // Parse google events but use stored original dates
-        const parsedGoogleEvents = googleEvents.map(googleEvent => parseGoogleEvent(googleEvent));
-        
+        const parsedGoogleEvents = filteredGoogleEvents.map(googleEvent => parseGoogleEvent(googleEvent));
+
         // Add local events for the same date
         const localEventsForDate = localEvents.filter(event =>
             event.date.toDateString() === date.toDateString() || 

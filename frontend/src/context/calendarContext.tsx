@@ -9,6 +9,9 @@ interface CalendarContextType {
     setTasks: (tasks: any[]) => void;
     events: any[];
     setEvents: (events: any[]) => void;
+    selectedCalendarIds: Set<string>;
+    setSelectedCalendarIds: (ids: Set<string>) => void;
+    toggleCalendar: (calendarId: string) => void;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
@@ -18,6 +21,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     const [tasks, setTasks] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
     const [hasFetched, setHasFetched] = useState(false);
+    const [selectedCalendarIds, setSelectedCalendarIds] = useState<Set<string>>(new Set());
 
     const { data: session } = useSession();
 
@@ -70,8 +74,39 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [session, hasFetched]);
 
+    useEffect(() => {
+        if (calendars.length > 0 && selectedCalendarIds.size === 0) {
+            const defaultSelected = calendars
+                .filter(cal => cal.selected === true)
+                .map(cal => cal.id);
+            setSelectedCalendarIds(new Set(defaultSelected));
+        }
+    }, [calendars]);
+
+    const toggleCalendar = (calendarId: string) => {
+        setSelectedCalendarIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(calendarId)) {
+                newSet.delete(calendarId);
+            } else {
+                newSet.add(calendarId);
+            }
+            return newSet;
+        });
+    }
+
     return (
-        <CalendarContext.Provider value={{ calendars, setCalendars, tasks, setTasks, events, setEvents }}>
+        <CalendarContext.Provider value={{
+            calendars,
+            setCalendars,
+            tasks,
+            setTasks,
+            events,
+            setEvents,
+            selectedCalendarIds,
+            setSelectedCalendarIds,
+            toggleCalendar
+        }}>
             {children}
         </CalendarContext.Provider>
     );
