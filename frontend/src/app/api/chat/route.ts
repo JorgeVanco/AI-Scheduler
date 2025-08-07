@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         ];
 
         // Stream the response
-        const stream = await model.stream(chatMessages);
+        const stream = await model.stream(chatMessages, { signal: req.signal });
 
         // Create a readable stream for the response
         const encoder = new TextEncoder();
@@ -47,9 +47,13 @@ export async function POST(req: Request) {
                     }
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
-                } catch (error) {
-                    console.error('Stream error:', error);
-                    controller.error(error);
+                } catch (error: any) {
+                    if (req.signal.aborted && error.name === 'AbortError') {
+                        console.log('Stream aborted');
+                    } else {
+                        console.error('Stream error:', error);
+                        controller.error(error);
+                    }
                 }
             },
         });

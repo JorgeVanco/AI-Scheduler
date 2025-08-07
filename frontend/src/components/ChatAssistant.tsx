@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Ellipsis } from "lucide-react"
+import { Send, Ellipsis, Square } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AIMessage from "./chat/AIMessage";
@@ -19,6 +19,7 @@ const ChatAssistant = () => {
     const [streamingMessage, setStreamingMessage] = useState('');
     const [waitingForResponse, setWaitingForResponse] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,9 +29,25 @@ const ChatAssistant = () => {
         scrollToBottom();
     }, [messages, streamingMessage]);
 
+    // Cleanup on component unmount
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
+        if (isLoading) {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+            setIsLoading(false);
+            setWaitingForResponse(false);
+            return;
+        } else if (!input.trim()) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -44,6 +61,10 @@ const ChatAssistant = () => {
         setStreamingMessage('');
         setWaitingForResponse(true);
 
+        // Create a new AbortController for this request
+        abortControllerRef.current = new AbortController();
+
+        let assistantContent = '';
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -53,6 +74,7 @@ const ChatAssistant = () => {
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
                 }),
+                signal: abortControllerRef.current.signal, // Add signal for cancellation
             });
 
             if (!response.ok) {
@@ -61,7 +83,6 @@ const ChatAssistant = () => {
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
-            let assistantContent = '';
 
             if (reader) {
                 setWaitingForResponse(false);
@@ -77,13 +98,6 @@ const ChatAssistant = () => {
                             const data = line.slice(6);
                             if (data === '[DONE]') {
                                 // Streaming finished
-                                const assistantMessage: Message = {
-                                    id: (Date.now() + 1).toString(),
-                                    role: 'assistant',
-                                    content: assistantContent,
-                                };
-                                setMessages(prev => [...prev, assistantMessage]);
-                                setStreamingMessage('');
                                 break;
                             } else {
                                 try {
@@ -100,17 +114,24 @@ const ChatAssistant = () => {
                     }
                 }
             }
-        } catch (error) {
-            console.error('Error:', error);
-            const errorMessage: Message = {
+        } catch (error: Error | any) {
+            if (abortControllerRef.current?.signal.aborted && error.name === 'AbortError') {
+                console.log('Request aborted');
+            } else {
+                console.error('Error:', error);
+                assistantContent = 'Lo siento, hubo un error al procesar tu mensaje. Asegúrate de que Ollama esté ejecutándose en tu sistema.';
+            }
+        } finally {
+            const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: 'Lo siento, hubo un error al procesar tu mensaje. Asegúrate de que Ollama esté ejecutándose en tu sistema.',
+                content: assistantContent,
             };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
+            setMessages(prev => [...prev, assistantMessage]);
+            setStreamingMessage('');
             setIsLoading(false);
             setWaitingForResponse(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -210,10 +231,10 @@ const ChatAssistant = () => {
                         variant="ghost"
                         size="icon"
                         type="submit"
-                        disabled={isLoading || !input.trim()}
+                        disabled={!input.trim() && !isLoading}
                         className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
                     >
-                        <Send className="h-4 w-4" />
+                        {isLoading ? <Square className="fill-current" fill="currentColor" /> : <Send className="h-4 w-4" />}
                     </Button>
                 </form>
             </div>
