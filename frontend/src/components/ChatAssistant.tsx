@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react"
+import { Send, Ellipsis } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AIMessage from "./chat/AIMessage";
+import { set } from "react-hook-form";
 
 interface Message {
     id: string;
@@ -16,6 +17,7 @@ const ChatAssistant = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
+    const [waitingForResponse, setWaitingForResponse] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -40,6 +42,7 @@ const ChatAssistant = () => {
         setInput('');
         setIsLoading(true);
         setStreamingMessage('');
+        setWaitingForResponse(true);
 
         try {
             const response = await fetch('/api/chat', {
@@ -61,6 +64,7 @@ const ChatAssistant = () => {
             let assistantContent = '';
 
             if (reader) {
+                setWaitingForResponse(false);
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
@@ -106,6 +110,7 @@ const ChatAssistant = () => {
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
+            setWaitingForResponse(false);
         }
     };
 
@@ -161,6 +166,25 @@ const ChatAssistant = () => {
                         )}
                     </div>
                 ))}
+
+                {/* Show waiting message if waiting for response */}
+                {waitingForResponse && (
+                    <div style={{ textAlign: "left" }}>
+                        <Ellipsis className="animate-blink" />
+                        <style>
+                            {`
+                                @keyframes blink {
+                                    0% { opacity: 1; }
+                                    50% { opacity: 0.2; }
+                                    100% { opacity: 1; }
+                                }
+                                .animate-blink {
+                                    animation: blink 1s infinite;
+                                }
+                            `}
+                        </style>
+                    </div>
+                )}
 
                 {/* Show streaming message */}
                 {streamingMessage && (
