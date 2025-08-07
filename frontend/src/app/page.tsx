@@ -1,49 +1,53 @@
 "use client";
 
-import { useEffect } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
 import Calendar from "@/components/Calendar";
-import { useCalendarContext } from "@/context/calendarContext";
-
-import CalendarList from "@/components/CalendarList";
 import ChatAssistant from "@/components/ChatAssistant";
+
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
 
 import styles from "./styles.module.css";
 
 export default function Home() {
 
-  const { data: session } = useSession();
-  const { calendars, tasks } = useCalendarContext();
-
-  useEffect(() => {
-    if ((session as any)?.error === "RefreshAccessTokenError") {
-      signIn(); // Force sign in to hopefully resolve error
-    }
-  }, [session]);
-
   return (
-    <div>
-      {session ? (
-        <>
-          <p>Signed in as {session.user?.email}</p>
-          <button onClick={() => signOut()}>Sign out</button>
-        </>
-      ) : (
-        <button onClick={() => signIn('google')}>Sign in with Google</button>
-      )}
-      <main className={`p-4 ${styles.calendarGrid}`}>
-        <aside>
-          <CalendarList calendars={calendars} />
-        </aside>
-        <section>
-          <Calendar />
-        </section>
-        <aside>
-          <ChatAssistant />
-        </aside>
-      </main>
-      <footer>
-      </footer>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>October 2024</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <main className={`p-4 ${styles.calendarGrid}`}>
+          <section>
+            <Calendar />
+          </section>
+          <aside>
+            <ChatAssistant />
+          </aside>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
