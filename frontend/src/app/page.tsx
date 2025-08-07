@@ -4,7 +4,9 @@ import { useEffect } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Calendar from "@/components/Calendar";
 import { useCalendarContext } from "@/context/calendarContext";
+
 import CalendarList from "@/components/CalendarList";
+import ChatAssistant from "@/components/ChatAssistant";
 
 import styles from "./styles.module.css";
 
@@ -36,6 +38,9 @@ export default function Home() {
         <section>
           <Calendar />
         </section>
+        <aside>
+          <ChatAssistant />
+        </aside>
       </main>
       <footer>
       </footer>
