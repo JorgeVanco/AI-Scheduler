@@ -13,9 +13,9 @@ const MonthView = ({
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return (
-        <CardContent>
+        <CardContent className="h-full flex flex-col overflow-hidden">
             {/* Day headers */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
+            <div className="grid grid-cols-7 gap-2 mb-2 flex-shrink-0">
                 {dayNames.map(day => (
                     <div key={day} className="text-center font-semibold text-gray-600 py-2">
                         {day}
@@ -24,7 +24,7 @@ const MonthView = ({
             </div>
 
             {/* Calendar grid */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-2 flex-1 overflow-auto">
                 {calendarDays.map((date, index) => {
                     const dayEvents = getEventsForDate(date);
                     const isCurrentDay = isToday(date);

@@ -114,13 +114,13 @@ const ChatAssistant = () => {
             border: "1px solid #ccc",
             borderRadius: 8,
             padding: "16px 0",
-            height: 400,
+            height: "100%",
             display: "flex",
             flexDirection: "column",
-            background: "#fff"
+            overflow: "hidden"
         }}>
             <div
-                className="flex-1 overflow-y-auto gap-4 flex flex-col px-6"
+                className="flex-1 overflow-y-auto gap-4 flex flex-col px-6 min-h-0 max-h-full"
                 style={{
                     scrollbarWidth: "thin",
                     scrollbarColor: "#bdbdbd #f5f5f5"

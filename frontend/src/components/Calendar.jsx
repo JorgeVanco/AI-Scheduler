@@ -45,8 +45,8 @@ const Calendar = () => {
         const isSelectedDateToday = isToday(selectedDate);
 
         return (
-            <Card className="w-full max-w-4xl mx-auto">
-                <CardHeader>
+            <Card className="w-full max-w-4xl mx-auto h-full flex flex-col">
+                <CardHeader className="flex-shrink-0">
                     <CalendarHeader
                         view={view}
                         currentDate={currentDate}
@@ -64,25 +64,27 @@ const Calendar = () => {
                     </CalendarHeader>
                 </CardHeader>
 
-                <DayView
-                    selectedDate={selectedDate}
-                    dayEvents={dayEvents}
-                    isSelectedDateToday={isSelectedDateToday}
-                    currentTime={currentTime}
-                    formatTime={formatTime}
-                    generateHours={generateHours}
-                    getPositionFromTime={getPositionFromTime}
-                    getCurrentTimePosition={getCurrentTimePosition}
-                    showEventForm={showEventForm}
-                    setShowEventForm={setShowEventForm}
-                    newEventTitle={newEventTitle}
-                    setNewEventTitle={setNewEventTitle}
-                    createEvent={createEvent}
-                    handleDragOver={handleDragOver}
-                    handleDrop={handleDrop}
-                    handleDragStart={handleDragStart}
-                    deleteEvent={deleteEvent}
-                />
+                <div className="flex-1 overflow-hidden">
+                    <DayView
+                        selectedDate={selectedDate}
+                        dayEvents={dayEvents}
+                        isSelectedDateToday={isSelectedDateToday}
+                        currentTime={currentTime}
+                        formatTime={formatTime}
+                        generateHours={generateHours}
+                        getPositionFromTime={getPositionFromTime}
+                        getCurrentTimePosition={getCurrentTimePosition}
+                        showEventForm={showEventForm}
+                        setShowEventForm={setShowEventForm}
+                        newEventTitle={newEventTitle}
+                        setNewEventTitle={setNewEventTitle}
+                        createEvent={createEvent}
+                        handleDragOver={handleDragOver}
+                        handleDrop={handleDrop}
+                        handleDragStart={handleDragStart}
+                        deleteEvent={deleteEvent}
+                    />
+                </div>
             </Card>
         );
     }
@@ -90,8 +92,8 @@ const Calendar = () => {
     const calendarDays = generateCalendarDays();
 
     return (
-        <Card className="w-full max-w-4xl mx-auto">
-            <CardHeader>
+        <Card className="w-full max-w-4xl mx-auto h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
                 <CalendarHeader
                     view={view}
                     currentDate={currentDate}
@@ -104,13 +106,15 @@ const Calendar = () => {
                 </CalendarHeader>
             </CardHeader>
 
-            <MonthView
-                calendarDays={calendarDays}
-                getEventsForDate={getEventsForDate}
-                isToday={isToday}
-                isSameMonth={isSameMonth}
-                handleDateClick={handleDateClick}
-            />
+            <div className="flex-1 overflow-hidden">
+                <MonthView
+                    calendarDays={calendarDays}
+                    getEventsForDate={getEventsForDate}
+                    isToday={isToday}
+                    isSameMonth={isSameMonth}
+                    handleDateClick={handleDateClick}
+                />
+            </div>
         </Card>
     );
 };
