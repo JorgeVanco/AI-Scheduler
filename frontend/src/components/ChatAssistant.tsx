@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import AIMessage from "./chat/AIMessage";
 
 interface Message {
     id: string;
@@ -112,52 +113,66 @@ const ChatAssistant = () => {
         <div style={{
             border: "1px solid #ccc",
             borderRadius: 8,
-            padding: 16,
+            padding: "16px 0",
             height: 400,
             display: "flex",
             flexDirection: "column",
             background: "#fff"
         }}>
-            <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
+            <div
+                className="flex-1 overflow-y-auto gap-4 flex flex-col px-6"
+                style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#bdbdbd #f5f5f5"
+                }}
+            >
+                <style>
+                    {`
+                        /* For Chrome, Edge, and Safari */
+                        .custom-scrollbar::-webkit-scrollbar {
+                            width: 6px;
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-thumb {
+                            background: #bdbdbd;
+                            border-radius: 4px;
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-track {
+                            background: #f5f5f5;
+                        }
+                    `}
+                </style>
                 {messages.map((msg) => (
                     <div key={msg.id} style={{
                         textAlign: msg.role === "assistant" ? "left" : "right",
-                        margin: "4px 0"
                     }}>
-                        <span style={{
-                            background: msg.role === "assistant" ? "#f0f0f0" : "#d1e7dd",
-                            borderRadius: 6,
-                            padding: "6px 12px",
-                            display: "inline-block",
-                            maxWidth: "80%",
-                            wordWrap: "break-word"
-                        }}>
-                            {msg.content}
-                        </span>
+                        {msg.role === "assistant" ? (
+                            <AIMessage message={msg.content} />
+                        ) : (
+                            <div style={{
+                                background: "#d1e7dd",
+                                borderRadius: 6,
+                                padding: "4px 8px",
+                                display: "inline-block",
+                                maxWidth: "80%",
+                                wordWrap: "break-word"
+                            }}>
+                                <AIMessage message={msg.content} />
+                            </div>
+                        )}
                     </div>
                 ))}
 
                 {/* Show streaming message */}
                 {streamingMessage && (
-                    <div style={{ textAlign: "left", margin: "4px 0" }}>
-                        <span style={{
-                            background: "#f0f0f0",
-                            borderRadius: 6,
-                            padding: "6px 12px",
-                            display: "inline-block",
-                            maxWidth: "80%",
-                            wordWrap: "break-word"
-                        }}>
-                            {streamingMessage}
-                            <span className="animate-pulse">|</span>
-                        </span>
+                    <div style={{ textAlign: "left" }}>
+                        <AIMessage message={streamingMessage} />
                     </div>
                 )}
 
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="relative">
+            <div className="relative mx-4">
                 <form onSubmit={handleSubmit}>
                     <Input
                         type="text"
