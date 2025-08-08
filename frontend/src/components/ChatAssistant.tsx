@@ -219,23 +219,34 @@ const ChatAssistant = () => {
 
             <div className="relative mx-4">
                 <form onSubmit={handleSubmit}>
-                    <Input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Envía un mensaje..."
-                        className="pr-10"
-                        disabled={isLoading}
-                    />
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        type="submit"
-                        disabled={!input.trim() && !isLoading}
-                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
-                    >
-                        {isLoading ? <Square className="fill-current" fill="currentColor" /> : <Send className="h-4 w-4" />}
-                    </Button>
+                    <div className="relative">
+                        <textarea
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Envía un mensaje..."
+                            className="w-full min-h-[40px] max-h-[300px] resize-none overflow-y-auto pr-8 px-3 py-2 border border-input bg-background rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={isLoading}
+                            rows={1}
+                            style={{
+                                scrollbarWidth: "thin",
+                                scrollbarColor: "#bdbdbd #f5f5f5"
+                            }}
+                            onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = Math.min(target.scrollHeight, 300) + 'px';
+                            }}
+                        />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            type="submit"
+                            disabled={!input.trim() && !isLoading}
+                            className="absolute right-1 bottom-0 transform -translate-y-1/4 h-8 w-8"
+                        >
+                            {isLoading ? <Square className="fill-current" fill="currentColor" /> : <Send className="h-4 w-4" />}
+                        </Button>
+                    </div>
                 </form>
             </div>
         </div>
