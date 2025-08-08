@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         // Prepare messages for the model
         const chatMessages = [
             systemMessage,
-            { role: "user", content: userPrompt }
+            ...messages
         ];
 
         // Stream the response
