@@ -75,7 +75,6 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user, account }: { token: any; user?: any; account?: any }) {
             // Initial sign in
-            console.log('JWT Callback:', { token, user, account });
             if (account && user) {
                 return {
                     accessToken: account.access_token,
