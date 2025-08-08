@@ -75,6 +75,7 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user, account }: { token: any; user?: any; account?: any }) {
             // Initial sign in
+            console.log('JWT Callback:', { token, user, account });
             if (account && user) {
                 return {
                     accessToken: account.access_token,
@@ -84,10 +85,10 @@ export const authOptions: NextAuthOptions = {
                 }
             }
 
-            // Return previous token if the access token has not expired yet
-            if (Date.now() < token.accessTokenExpires) {
-                return token
-            }
+            // // Return previous token if the access token has not expired yet
+            // if (Date.now() < token.accessTokenExpires) {
+            //     return token
+            // }
 
             // Access token has expired, try to update it
             return refreshAccessToken(token)
