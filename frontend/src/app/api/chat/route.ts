@@ -84,9 +84,9 @@ export async function POST(req: Request) {
             }
         });
 
-        const stream = await agent.stream(
+        const stream = await agent.streamEvents(
             { messages: langchainMessages },
-            { signal: req.signal, streamMode: "messages" }
+            { version: "v2", signal: req.signal }
         );
 
         // Create a readable stream for the response
@@ -94,12 +94,24 @@ export async function POST(req: Request) {
         const readableStream = new ReadableStream({
             async start(controller) {
                 try {
-                    for await (const [message, _metadata] of stream as AsyncIterable<[AIMessageChunk, any]>) {
-                        console.log(message)
-                        const content = message.content || '';
-                        if (content) {
-                            const data = `data: ${JSON.stringify({ content })}\n\n`;
+                    for await (const { event, data, name } of stream) {
+                        if (event === "on_tool_start") {
+                            const data = `data: ${JSON.stringify({ content: `**Tool being called: ${name}**\n\n` })}\n\n`;
                             controller.enqueue(encoder.encode(data));
+                        }
+
+                        // if (event === "on_tool_end") {
+                        //     console.log("Tool completed:", name);
+                        //     console.log("Tool output:", data?.output);
+                        // }
+
+                        else if (event === "on_chat_model_stream") {
+                            // Handle AI message streaming
+                            const content = data?.chunk?.content || '';
+                            if (content) {
+                                const data = `data: ${JSON.stringify({ content })}\n\n`;
+                                controller.enqueue(encoder.encode(data));
+                            }
                         }
                     }
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
