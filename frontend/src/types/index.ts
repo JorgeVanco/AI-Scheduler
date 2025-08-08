@@ -5,19 +5,39 @@ export interface Calendar {
     summary: string;
     description?: string;
     timeZone?: string;
-    backgroundColor?: string;
-    foregroundColor?: string;
-    selected?: boolean;
+    backgroundColor: string;
+    foregroundColor: string;
+    colorId: string;
+    conferenceProperties?: {
+        allowedConferenceSolutionTypes: string[];
+    };
+    etag?: string;
+    kind?: string;
+    notificationSettings?: {
+        notifications?: NotificationType[];
+    };
     primary?: boolean;
+    selected?: boolean;
+    timezone?: string;
     accessRole: 'owner' | 'reader' | 'writer' | 'freeBusyReader';
     defaultReminders?: Reminder[];
 }
 
+export interface NotificationType {
+    type: 'email' | 'popup';
+    method: 'email' | 'popup';
+}
+
 export interface Event {
     id: string;
+    etag?: string;
+    kind?: string;
+    iCalUID?: string;
     summary: string;
     description?: string;
     start: EventDateTime;
+    originalStartTime?: EventDateTime;
+    recurringEventId?: string;
     end: EventDateTime;
     location?: string;
     status?: 'confirmed' | 'tentative' | 'cancelled';
@@ -31,6 +51,9 @@ export interface Event {
     calendarId?: string;
     backgroundColor?: string;
     colorId?: string;
+    created?: string;
+    sequence?: number;
+    updated?: string;
 }
 
 export interface EventDateTime {
@@ -70,7 +93,9 @@ export interface Reminder {
 }
 
 export interface TaskList {
+    etag?: string;
     id: string;
+    kind?: string;
     title: string;
     updated?: string;
     selfLink?: string;
@@ -78,6 +103,9 @@ export interface TaskList {
 
 export interface Task {
     id: string;
+    etag?: string;
+    kind?: string;
+    links?: LinkType[];
     title: string;
     notes?: string;
     status: 'needsAction' | 'completed';
@@ -90,6 +118,13 @@ export interface Task {
     updated?: string; // Formato RFC3339
     selfLink?: string;
     taskListId?: string; // Para asociar con la lista de tareas
+    webViewLink?: string;
+}
+
+export interface LinkType {
+    type: "generic";
+    link: string;
+    description: string;
 }
 
 // Tipos para el contexto
@@ -106,6 +141,19 @@ export interface CalendarContextType {
     setSelectedCalendarIds: (ids: Set<string>) => void;
     toggleCalendar: (calendarId: string) => Promise<void>;
     updateCalendarSelected: (calendarId: string, selected: boolean) => Promise<void>;
+}
+
+// Tipos para el contexto del chat
+export interface ChatCalendarContext {
+    calendars: Calendar[];
+    tasks: Task[];
+    events: Event[];
+}
+
+export interface Message {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
 }
 
 // Tipos para las respuestas de la API de Google
