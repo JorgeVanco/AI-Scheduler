@@ -18,6 +18,7 @@ const ChatAssistant = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
     const [waitingForResponse, setWaitingForResponse] = useState(false);
+    const messageInputRef = useRef<HTMLTextAreaElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -55,6 +56,7 @@ const ChatAssistant = () => {
             content: input.trim(),
         };
 
+        messageInputRef.current!.style.height = 'auto'; // Reset height before setting new value
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
@@ -222,6 +224,7 @@ const ChatAssistant = () => {
                     <div className="relative">
                         <textarea
                             value={input}
+                            ref={messageInputRef}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Envía un mensaje..."
                             className="w-full min-h-[40px] max-h-[300px] resize-none overflow-y-auto pr-8 px-3 py-2 border border-input bg-background rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -230,6 +233,12 @@ const ChatAssistant = () => {
                             style={{
                                 scrollbarWidth: "thin",
                                 scrollbarColor: "#bdbdbd #f5f5f5"
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSubmit(e);
+                                }
                             }}
                             onInput={(e) => {
                                 const target = e.target as HTMLTextAreaElement;
