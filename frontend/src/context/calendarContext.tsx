@@ -19,6 +19,7 @@ const CalendarContext = createContext<CalendarContextType | undefined>(undefined
 
 export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     const [calendars, setCalendars] = useState<any[]>([]);
+    const [taskLists, setTaskLists] = useState<any[]>([]);
     const [tasks, setTasks] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
     const [hasFetched, setHasFetched] = useState(false);
@@ -66,7 +67,16 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.items) {
-                        setTasks(data.items);
+                        setTaskLists(data.items);
+                        data.items.forEach((task: any) => {
+                            fetch(`/api/google/tasks/${task.id}`)
+                                .then((res) => res.json())
+                                .then((data) => {
+                                    if (data.items) {
+                                        setTasks(prevTasks => [...prevTasks, ...data.items]);
+                                    }
+                                });
+                        });
                         console.log('Tasks:', data.items);
                     } else {
                         console.error('Error:', data.error);
