@@ -1,10 +1,14 @@
 import { ChatOllama } from "@langchain/ollama";
 import { Message, ChatCalendarContext } from "@/types";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
 
 import { getDateEvents, getNextXHoursEvents } from "@/agent/tools";
 import { AgentUtils } from "@/agent/utils";
 import { AgentCommands } from "@/agent/commands";
 import { PromptBuilder } from "@/agent/prompts";
+
+import agent from "@/agent/agent";
+import { AIMessageChunk, isAIMessageChunk } from "@langchain/core/messages";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -64,13 +68,6 @@ export async function POST(req: Request) {
             }
         }
 
-        // Initialize Ollama model
-        const model = new ChatOllama({
-            baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-            model: process.env.OLLAMA_MODEL || "gemma3:4b",
-            temperature: 0.7,
-        });
-
         // Build system prompt with context
         const systemMessageContent = promptBuilder.buildSystemPrompt(
             intentAnalysis,
@@ -78,28 +75,28 @@ export async function POST(req: Request) {
             priorityInsights
         );
 
-        // Create a system message for context
-        const systemMessage = {
-            role: "system",
-            content: systemMessageContent
-        };
-
-        // Prepare messages for the model
-        const chatMessages = [
-            systemMessage,
-            ...messages
-        ];
-
         // Stream the response
-        const stream = await model.stream(chatMessages, { signal: req.signal });
+        const langchainMessages = messages.map(msg => {
+            if (msg.role === 'user') {
+                return new HumanMessage(msg.content);
+            } else {
+                return new AIMessage(msg.content);
+            }
+        });
+
+        const stream = await agent.stream(
+            { messages: langchainMessages },
+            { signal: req.signal, streamMode: "messages" }
+        );
 
         // Create a readable stream for the response
         const encoder = new TextEncoder();
         const readableStream = new ReadableStream({
             async start(controller) {
                 try {
-                    for await (const chunk of stream) {
-                        const content = chunk.content || '';
+                    for await (const [message, _metadata] of stream as AsyncIterable<[AIMessageChunk, any]>) {
+                        console.log(message)
+                        const content = message.content || '';
                         if (content) {
                             const data = `data: ${JSON.stringify({ content })}\n\n`;
                             controller.enqueue(encoder.encode(data));
