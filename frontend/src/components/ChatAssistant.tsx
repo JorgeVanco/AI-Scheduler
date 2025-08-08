@@ -2,15 +2,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Ellipsis, Square } from "lucide-react"
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import AIMessage from "./chat/AIMessage";
-import { set } from "react-hook-form";
+import { useCalendarContext } from "@/context/calendarContext";
 
-interface Message {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-}
+import { ChatCalendarContext, Message } from "@/types";
+
 
 const ChatAssistant = () => {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -18,9 +14,22 @@ const ChatAssistant = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
     const [waitingForResponse, setWaitingForResponse] = useState(false);
+    const [showQuickCommands, setShowQuickCommands] = useState(false);
     const messageInputRef = useRef<HTMLTextAreaElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const [chatCalendarContext, setChatCalendarContext] = useState<ChatCalendarContext | null>(null);
+
+    const { calendars, tasks, events } = useCalendarContext();
+
+    const quickCommands = [
+        { label: "📅 Mi agenda de hoy", command: "/agenda" },
+        { label: "✅ Resumen de tareas", command: "/tareas" },
+        { label: "🕒 Tiempo libre", command: "/tiempo-libre" },
+        { label: "📊 Carga de trabajo", command: "/carga" },
+        { label: "⏰ Próximos eventos", command: "/próximos" },
+        { label: "📈 Vista semanal", command: "/semana" },
+    ];
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,6 +38,15 @@ const ChatAssistant = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages, streamingMessage]);
+
+    useEffect(() => {
+        setChatCalendarContext({
+            calendars,
+            tasks,
+            events,
+        });
+    }, [calendars, tasks, events]);
+
 
     // Cleanup on component unmount
     useEffect(() => {
@@ -50,10 +68,19 @@ const ChatAssistant = () => {
             return;
         } else if (!input.trim()) return;
 
+        await sendMessage(input.trim());
+    };
+
+    const handleQuickCommand = async (command: string) => {
+        await sendMessage(command);
+        setShowQuickCommands(false);
+    };
+
+    const sendMessage = async (messageContent: string) => {
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
-            content: input.trim(),
+            content: messageContent,
         };
 
         messageInputRef.current!.style.height = 'auto'; // Reset height before setting new value
@@ -75,6 +102,7 @@ const ChatAssistant = () => {
                 },
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
+                    calendarContext: chatCalendarContext,
                 }),
                 signal: abortControllerRef.current.signal, // Add signal for cancellation
             });
@@ -169,6 +197,23 @@ const ChatAssistant = () => {
                         }
                     `}
                 </style>
+                {messages.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                        <div className="text-lg mb-2">👋 ¡Hola! Soy tu asistente de IA</div>
+                        <div className="text-sm mb-4">
+                            Te ayudo a organizar tu calendario y tareas. Puedes preguntarme cosas como:
+                        </div>
+                        <div className="text-sm text-left max-w-md mx-auto space-y-1">
+                            <div>• "¿Qué tengo programado hoy?"</div>
+                            <div>• "Muéstrame mis tareas pendientes"</div>
+                            <div>• "¿Cuándo estoy libre?"</div>
+                            <div>• "¿Cómo está mi carga de trabajo?"</div>
+                        </div>
+                        <div className="text-xs mt-4 text-gray-400">
+                            💡 Tip: Haz clic en ⚡ para ver comandos rápidos
+                        </div>
+                    </div>
+                )}
                 {messages.map((msg) => (
                     <div key={msg.id} style={{
                         textAlign: msg.role === "assistant" ? "left" : "right",
@@ -219,6 +264,27 @@ const ChatAssistant = () => {
                 <div ref={messagesEndRef} />
             </div>
 
+            {/* Quick Commands */}
+            {showQuickCommands && (
+                <div className="mx-4 mb-2 p-3 bg-gray-50 rounded-lg border">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Comandos rápidos:</div>
+                    <div className="grid grid-cols-2 gap-2">
+                        {quickCommands.map((cmd, index) => (
+                            <Button
+                                key={index}
+                                variant="ghost"
+                                size="sm"
+                                className="justify-start text-left text-xs h-8"
+                                onClick={() => handleQuickCommand(cmd.command)}
+                                disabled={isLoading}
+                            >
+                                {cmd.label}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="relative mx-4">
                 <form onSubmit={handleSubmit}>
                     <div className="relative">
@@ -227,7 +293,7 @@ const ChatAssistant = () => {
                             ref={messageInputRef}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Envía un mensaje..."
-                            className="w-full min-h-[40px] max-h-[300px] resize-none overflow-y-auto pr-8 px-3 py-2 border border-input bg-background rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="w-full min-h-[40px] max-h-[300px] resize-none overflow-y-auto pl-10 pr-10 py-2 border border-input bg-background rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={isLoading}
                             rows={1}
                             style={{
@@ -246,6 +312,17 @@ const ChatAssistant = () => {
                                 target.style.height = Math.min(target.scrollHeight, 300) + 'px';
                             }}
                         />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={() => setShowQuickCommands(!showQuickCommands)}
+                            className="absolute left-1 bottom-0 transform -translate-y-1/4 h-8 w-8"
+                            disabled={isLoading}
+                            title="Comandos rápidos"
+                        >
+                            <span className="text-sm">⚡</span>
+                        </Button>
                         <Button
                             variant="ghost"
                             size="icon"

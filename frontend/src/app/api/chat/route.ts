@@ -1,15 +1,68 @@
 import { ChatOllama } from "@langchain/ollama";
+import { Message, ChatCalendarContext } from "@/types";
+
+import { getDateEvents, getNextXHoursEvents } from "@/agent/tools";
+import { AgentUtils } from "@/agent/utils";
+import { AgentCommands } from "@/agent/commands";
+import { PromptBuilder } from "@/agent/prompts";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
     try {
-        const { messages } = await req.json();
+        const { messages, calendarContext }: { messages: Message[]; calendarContext: ChatCalendarContext } = await req.json();
 
         // Get the latest message from the user
         const lastMessage = messages[messages.length - 1];
         const userPrompt = lastMessage?.content || '';
+
+        // Initialize agent utilities
+        const agentUtils = new AgentUtils(calendarContext);
+        const agentCommands = new AgentCommands(calendarContext);
+        const promptBuilder = new PromptBuilder(calendarContext);
+
+        // Analyze user intent and get contextual information
+        const intentAnalysis = agentUtils.analyzeIntent(userPrompt);
+        const smartSuggestions = agentUtils.generateSmartSuggestions();
+        const priorityInsights = agentUtils.getPriorityInsights();
+
+        // Check if the user message contains a direct command
+        const commandPattern = /^\/(\w+)(?:\s+(.*))?$/;
+        const commandMatch = userPrompt.match(commandPattern);
+
+        let detectedCommand = null;
+        let commandParams = null;
+
+        if (commandMatch) {
+            detectedCommand = commandMatch[1];
+            commandParams = commandMatch[2];
+        }
+
+        if (detectedCommand) {
+            const commandResult = agentCommands.executeCommand(detectedCommand, commandParams);
+
+            if (commandResult.success) {
+                // Return command result as a stream
+                const encoder = new TextEncoder();
+                const readableStream = new ReadableStream({
+                    start(controller) {
+                        const data = `data: ${JSON.stringify({ content: commandResult.message })}\n\n`;
+                        controller.enqueue(encoder.encode(data));
+                        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                        controller.close();
+                    },
+                });
+
+                return new Response(readableStream, {
+                    headers: {
+                        'Content-Type': 'text/event-stream',
+                        'Cache-Control': 'no-cache',
+                        'Connection': 'keep-alive',
+                    },
+                });
+            }
+        }
 
         // Initialize Ollama model
         const model = new ChatOllama({
@@ -18,10 +71,17 @@ export async function POST(req: Request) {
             temperature: 0.7,
         });
 
+        // Build system prompt with context
+        const systemMessageContent = promptBuilder.buildSystemPrompt(
+            intentAnalysis,
+            smartSuggestions,
+            priorityInsights
+        );
+
         // Create a system message for context
         const systemMessage = {
             role: "system",
-            content: "You are a helpful AI assistant for an AI-Scheduler application. You help users manage their calendar events, tasks, and schedules."
+            content: systemMessageContent
         };
 
         // Prepare messages for the model

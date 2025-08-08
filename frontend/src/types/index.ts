@@ -56,11 +56,18 @@ export interface Event {
     updated?: string;
 }
 
-export interface EventDateTime {
-    date?: string; // Para eventos de día completo (formato YYYY-MM-DD)
-    dateTime?: string; // Para eventos con hora específica (formato RFC3339)
-    timeZone?: string;
-}
+export type EventDateTime =
+    | {
+        date: string; // Para eventos de día completo (formato YYYY-MM-DD)
+        dateTime?: never;
+        timeZone?: string;
+    }
+    | {
+        date?: never;
+        dateTime: string; // Para eventos con hora específica (formato RFC3339)
+        timeZone?: string;
+    };
+
 
 export interface Attendee {
     id?: string;

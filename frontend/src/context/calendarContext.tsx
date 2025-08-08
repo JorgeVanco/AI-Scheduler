@@ -54,6 +54,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                                     } else {
                                         console.error('Error fetching events:', data);
                                     }
+                                    console.log(data.items)
                                 });
                         });
                         console.log('Calendars:', sortedCalendars);
@@ -73,6 +74,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                                     if (data.items) {
                                         setTasks(prevTasks => [...prevTasks, ...data.items]);
                                     }
+                                    console.log("tasks:", data.items);
                                 });
                         });
                         console.log('Task Lists:', data.items);
