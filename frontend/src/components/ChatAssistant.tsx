@@ -14,6 +14,7 @@ const ChatAssistant = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
     const [waitingForResponse, setWaitingForResponse] = useState(false);
+    const [toolsInProgress, setToolsInProgress] = useState<Set<string>>(new Set());
     const [showQuickCommands, setShowQuickCommands] = useState(false);
     const messageInputRef = useRef<HTMLTextAreaElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,6 +90,7 @@ const ChatAssistant = () => {
         setIsLoading(true);
         setStreamingMessage('');
         setWaitingForResponse(true);
+        setToolsInProgress(new Set());
 
         // Create a new AbortController for this request
         abortControllerRef.current = new AbortController();
@@ -132,7 +134,33 @@ const ChatAssistant = () => {
                             } else {
                                 try {
                                     const parsed = JSON.parse(data);
-                                    if (parsed.content) {
+                                    if (parsed.type === 'tool_start') {
+                                        // const toolName = parsed.content.match(/id="([^"]+)"/)?.[1];
+                                        const toolName = parsed.toolName;
+                                        const toolId = parsed.toolId;
+                                        if (toolId) {
+                                            setToolsInProgress(prev => new Set([...prev, toolId]));
+                                        }
+                                        assistantContent += parsed.content;
+                                        setStreamingMessage(assistantContent);
+                                    }
+                                    else if (parsed.type === 'tool_end') {
+                                        const toolId = parsed.toolId;
+                                        if (toolId) {
+                                            setToolsInProgress(prev => {
+                                                const newSet = new Set(prev);
+                                                newSet.delete(toolId);
+                                                return newSet;
+                                            });
+                                        }
+                                        assistantContent += parsed.content;
+                                        setStreamingMessage(assistantContent);
+                                    }
+                                    else if (parsed.type === 'message' && parsed.content) {
+                                        assistantContent += parsed.content;
+                                        setStreamingMessage(assistantContent);
+                                    }
+                                    else if (parsed.content && !parsed.type) {
                                         assistantContent += parsed.content;
                                         setStreamingMessage(assistantContent);
                                     }
@@ -161,6 +189,7 @@ const ChatAssistant = () => {
             setStreamingMessage('');
             setIsLoading(false);
             setWaitingForResponse(false);
+            setToolsInProgress(new Set());
             abortControllerRef.current = null;
         }
     };

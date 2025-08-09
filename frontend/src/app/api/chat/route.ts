@@ -94,23 +94,55 @@ export async function POST(req: Request) {
         const readableStream = new ReadableStream({
             async start(controller) {
                 try {
-                    for await (const { event, data, name } of stream) {
-                        if (event === "on_tool_start") {
-                            const data = `data: ${JSON.stringify({ content: `**Tool being called: ${name}**\n\n` })}\n\n`;
-                            controller.enqueue(encoder.encode(data));
+                    for await (const chunk of stream) {
+                        const { event, data, name } = chunk;
+                        console.log(chunk)
+                        // on_tool_start does not give id, so we handle it here
+                        if (event === "on_chat_model_end" && data.output.tool_calls?.length > 0) {
+                            // Handle tool calls
+                            for (const toolCall of data.output.tool_calls) {
+                                const toolData = `data: ${JSON.stringify({
+                                    type: 'tool_start',
+                                    content: `<tool id="${toolCall.id}">Tool called: ${toolCall.name}`,
+                                    toolName: toolCall.name,
+                                    toolId: toolCall.id
+                                })}\n\n`;
+                                controller.enqueue(encoder.encode(toolData));
+                            }
                         }
-
-                        // if (event === "on_tool_end") {
-                        //     console.log("Tool completed:", name);
-                        //     console.log("Tool output:", data?.output);
+                        // if (event === "on_tool_start") {
+                        //     // console.log('Tool started:', chunk);
+                        //     const toolData = `data: ${JSON.stringify({
+                        //         type: 'tool_start',
+                        //         content: `<tool id="${name}">Tool being called: ${name}`,
+                        //         toolName: name,
+                        //     })}\n\n`;
+                        //     controller.enqueue(encoder.encode(toolData));
                         // }
+
+                        else if (event === "on_tool_end") {
+                            console.log(data)
+                            // console.log('Tool ended:', chunk);
+                            const toolId = data?.output?.tool_call_id || name;
+                            const toolData = `data: ${JSON.stringify({
+                                type: 'tool_end',
+                                content: `</tool id="${toolId}">`,
+                                toolName: name,
+                                output: data?.output,
+                                toolId: data?.output.tool_call_id
+                            })}\n\n`;
+                            controller.enqueue(encoder.encode(toolData));
+                        }
 
                         else if (event === "on_chat_model_stream") {
                             // Handle AI message streaming
                             const content = data?.chunk?.content || '';
                             if (content) {
-                                const data = `data: ${JSON.stringify({ content })}\n\n`;
-                                controller.enqueue(encoder.encode(data));
+                                const streamData = `data: ${JSON.stringify({
+                                    type: 'message',
+                                    content
+                                })}\n\n`;
+                                controller.enqueue(encoder.encode(streamData));
                             }
                         }
                     }
