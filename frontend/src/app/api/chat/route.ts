@@ -1,21 +1,18 @@
-import { ChatOllama } from "@langchain/ollama";
-import { Message, ChatCalendarContext } from "@/types";
-import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
+import { ChatCalendarContext } from "@/types";
+import { HumanMessage, AIMessage, SystemMessage, ToolMessage, isSystemMessage } from "@langchain/core/messages";
 
-import { getDateEvents, getNextXHoursEvents } from "@/agent/tools";
 import { AgentUtils } from "@/agent/utils";
 import { AgentCommands } from "@/agent/commands";
 import { PromptBuilder } from "@/agent/prompts";
 
 import agent from "@/agent/agent";
-import { AIMessageChunk, isAIMessageChunk } from "@langchain/core/messages";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
     try {
-        const { messages, calendarContext }: { messages: Message[]; calendarContext: ChatCalendarContext } = await req.json();
+        const { messages, calendarContext }: { messages: any[]; calendarContext: ChatCalendarContext } = await req.json();
 
         // Get the latest message from the user
         const lastMessage = messages[messages.length - 1];
@@ -75,27 +72,50 @@ export async function POST(req: Request) {
             priorityInsights
         );
 
+        console.log("System Message Content:", systemMessageContent);
+
         // Stream the response
-        const langchainMessages = [new SystemMessage(systemMessageContent), ...messages.map(msg => {
-            if (msg.role === 'user') {
-                return new HumanMessage(msg.content);
+        const langchainMessages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = [new SystemMessage(systemMessageContent), ...messages.map(msg => {
+            if (msg.id.includes('HumanMessage')) {
+                return new HumanMessage(msg.kwargs.content);
+            }
+            else if (msg.id.includes('AIMessageChunk')) {
+                return new AIMessage(msg.kwargs.content);
+            }
+            else if (msg.id.includes('ToolMessage')) {
+                return new ToolMessage(msg.kwargs.content, msg.kwargs.tool_calls);
             } else {
-                return new AIMessage(msg.content);
+                return new AIMessage(msg.kwargs.content); // Default to AIMessage for other cases
             }
         })];
 
-        const stream = await agent.streamEvents(
+        let config = {
+            "configurable": {
+                "thread_id": crypto.randomUUID(),
+            }
+        };
+        const stream = agent.streamEvents(
             { messages: langchainMessages },
-            { version: "v2", signal: req.signal }
+            { version: "v2", signal: req.signal, ...config }
         );
 
         // Create a readable stream for the response
         const encoder = new TextEncoder();
+        let finalAgentMessages: (AIMessage | HumanMessage | ToolMessage | SystemMessage)[] = [];
+
         const readableStream = new ReadableStream({
             async start(controller) {
                 try {
                     for await (const chunk of stream) {
                         const { event, data, name } = chunk;
+
+                        if (event === "on_chain_end" && name === "LangGraph") {
+                            finalAgentMessages = data.output.messages || [];
+                            if (isSystemMessage(finalAgentMessages[0])) {
+                                finalAgentMessages = finalAgentMessages.slice(1);
+                            }
+                        }
+
                         // on_tool_start does not give id, so we handle it here
                         if (event === "on_chat_model_end" && data.output.tool_calls?.length > 0) {
                             // Handle tool calls
@@ -109,19 +129,8 @@ export async function POST(req: Request) {
                                 controller.enqueue(encoder.encode(toolData));
                             }
                         }
-                        // if (event === "on_tool_start") {
-                        //     // console.log('Tool started:', chunk);
-                        //     const toolData = `data: ${JSON.stringify({
-                        //         type: 'tool_start',
-                        //         content: `<tool id="${name}">Tool being called: ${name}`,
-                        //         toolName: name,
-                        //     })}\n\n`;
-                        //     controller.enqueue(encoder.encode(toolData));
-                        // }
 
                         else if (event === "on_tool_end") {
-                            console.log(data)
-                            // console.log('Tool ended:', chunk);
                             const toolId = data?.output?.tool_call_id || name;
                             const toolData = `data: ${JSON.stringify({
                                 type: 'tool_end',
@@ -145,6 +154,15 @@ export async function POST(req: Request) {
                             }
                         }
                     }
+
+                    if (finalAgentMessages.length > 0) {
+                        const finalStateData = `data: ${JSON.stringify({
+                            type: 'final_conversation',
+                            agentMessages: finalAgentMessages
+                        })}\n\n`;
+                        controller.enqueue(encoder.encode(finalStateData));
+                    }
+
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (error: any) {

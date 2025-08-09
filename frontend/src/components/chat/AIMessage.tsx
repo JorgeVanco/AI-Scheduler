@@ -10,7 +10,7 @@ const LoadingSpinner = () => (
     <LoaderCircle className="animate-spin h-4 w-4 bg-blue" />
 );
 
-const AIMessage = ({ message }: AIMessageProps) => {
+const AIUIMessage = ({ message }: AIMessageProps) => {
 
     const renderMessage = (msg: string) => {
         const parts = msg.split(/(<tool id="[^"]+">[\s\S]*?(?:<\/tool id="[^"]+">|$))/);
@@ -51,7 +51,7 @@ const AIMessage = ({ message }: AIMessageProps) => {
                 <ReactMarkdown
                     key={index}
                     components={{
-                        p: ({ children }) => <p style={{ margin: '0.3em 0', lineHeight: '1.3' }}>{children}</p>,
+                        p: ({ children }) => <p style={{ margin: '0.3em 0', lineHeight: '1.3', textAlign: 'left' }}>{children}</p>,
                         code: ({ children }) => (
                             <code style={{
                                 backgroundColor: '#e5e5e5',
@@ -91,4 +91,4 @@ const AIMessage = ({ message }: AIMessageProps) => {
     return <div className="text-sm">{renderMessage(message)}</div>;
 }
 
-export default AIMessage;
+export default AIUIMessage;

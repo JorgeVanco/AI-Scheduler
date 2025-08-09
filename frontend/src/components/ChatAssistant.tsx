@@ -2,14 +2,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Ellipsis, Square } from "lucide-react"
 import { Button } from "@/components/ui/button";
-import AIMessage from "./chat/AIMessage";
+import AIUIMessage from "./chat/AIMessage";
+import { HumanMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
+
 import { useCalendarContext } from "@/context/calendarContext";
 
-import { ChatCalendarContext, Message } from "@/types";
+import { ChatCalendarContext } from "@/types";
 
 
 const ChatAssistant = () => {
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<(HumanMessage | AIMessage | ToolMessage)[]>([]); // UI messages with tool tags
+    const [agentMessages, setAgentMessages] = useState<(HumanMessage | AIMessage | ToolMessage)[]>([]); // Clean agent messages
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
@@ -77,14 +80,11 @@ const ChatAssistant = () => {
     };
 
     const sendMessage = async (messageContent: string) => {
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: messageContent,
-        };
+        const userMessage = new HumanMessage(messageContent);
 
         messageInputRef.current!.style.height = 'auto'; // Reset height before setting new value
         setMessages(prev => [...prev, userMessage]);
+        setAgentMessages(prev => [...prev, userMessage]); // Add to both arrays
         setInput('');
         setIsLoading(true);
         setStreamingMessage('');
@@ -101,7 +101,7 @@ const ChatAssistant = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    messages: [...messages, userMessage],
+                    messages: agentMessages.concat([userMessage]),
                     calendarContext: chatCalendarContext,
                 }),
                 signal: abortControllerRef.current.signal, // Add signal for cancellation
@@ -132,15 +132,14 @@ const ChatAssistant = () => {
                             } else {
                                 try {
                                     const parsed = JSON.parse(data);
-                                    if (parsed.type === 'tool_start') {
-                                        // const toolName = parsed.content.match(/id="([^"]+)"/)?.[1];
-                                        const toolName = parsed.toolName;
-                                        const toolId = parsed.toolId;
+                                    if (parsed.type === 'final_conversation') {
+                                        setAgentMessages(parsed.agentMessages);
+                                    }
+                                    else if (parsed.type === 'tool_start') {
                                         assistantContent += parsed.content;
                                         setStreamingMessage(assistantContent);
                                     }
                                     else if (parsed.type === 'tool_end') {
-                                        const toolId = parsed.toolId;
                                         assistantContent += parsed.content;
                                         setStreamingMessage(assistantContent);
                                     }
@@ -168,11 +167,7 @@ const ChatAssistant = () => {
                 assistantContent = 'Lo siento, hubo un error al procesar tu mensaje. Asegúrate de que Ollama esté ejecutándose en tu sistema.';
             }
         } finally {
-            const assistantMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: assistantContent,
-            };
+            const assistantMessage = new AIMessage(assistantContent);
             setMessages(prev => [...prev, assistantMessage]);
             setStreamingMessage('');
             setIsLoading(false);
@@ -230,12 +225,12 @@ const ChatAssistant = () => {
                         </div>
                     </div>
                 )}
-                {messages.map((msg) => (
-                    <div key={msg.id} style={{
-                        textAlign: msg.role === "assistant" ? "left" : "right",
+                {messages.map((msg, index) => {
+                    return (<div key={index} style={{
+                        textAlign: msg._getType() === "ai" ? "left" : "right",
                     }}>
-                        {msg.role === "assistant" ? (
-                            <AIMessage message={msg.content} />
+                        {msg._getType() === "ai" ? (
+                            <AIUIMessage message={msg.content as string} />
                         ) : (
                             <div style={{
                                 background: "#d1e7dd",
@@ -245,11 +240,12 @@ const ChatAssistant = () => {
                                 maxWidth: "80%",
                                 wordWrap: "break-word"
                             }}>
-                                <AIMessage message={msg.content} />
+                                <AIUIMessage message={msg.content as string} />
                             </div>
                         )}
                     </div>
-                ))}
+                    )
+                })}
 
                 {/* Show waiting message if waiting for response */}
                 {waitingForResponse && (
@@ -273,7 +269,7 @@ const ChatAssistant = () => {
                 {/* Show streaming message */}
                 {streamingMessage && (
                     <div style={{ textAlign: "left" }}>
-                        <AIMessage message={streamingMessage} />
+                        <AIUIMessage message={streamingMessage} />
                     </div>
                 )}
 

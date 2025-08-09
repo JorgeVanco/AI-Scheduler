@@ -157,12 +157,6 @@ export interface ChatCalendarContext {
     events: Event[];
 }
 
-export interface Message {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-}
-
 // Tipos para las respuestas de la API de Google
 export interface GoogleCalendarListResponse {
     kind: string;
