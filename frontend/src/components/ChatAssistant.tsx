@@ -108,6 +108,9 @@ const ChatAssistant = () => {
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Unauthorized');
+                }
                 throw new Error('Failed to fetch response');
             }
 
@@ -162,8 +165,9 @@ const ChatAssistant = () => {
         } catch (error: Error | any) {
             if (abortControllerRef.current?.signal.aborted && error.name === 'AbortError') {
                 console.log('Request aborted');
+            } else if (error.message === 'Unauthorized') {
+                assistantContent = 'Por favor, inicie sesión para continuar.';
             } else {
-                console.error('Error:', error);
                 assistantContent = 'Lo siento, hubo un error al procesar tu mensaje. Asegúrate de que Ollama esté ejecutándose en tu sistema.';
             }
         } finally {

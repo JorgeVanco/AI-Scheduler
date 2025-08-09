@@ -1,3 +1,7 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
+import { NextResponse } from 'next/server';
+
 import { ChatCalendarContext } from "@/types";
 import { HumanMessage, AIMessage, SystemMessage, ToolMessage, isSystemMessage } from "@langchain/core/messages";
 
@@ -12,6 +16,12 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+
+        if (!session?.accessToken) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { messages, calendarContext }: { messages: any[]; calendarContext: ChatCalendarContext } = await req.json();
 
         // Get the latest message from the user
