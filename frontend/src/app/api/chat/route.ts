@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { ChatCalendarContext } from "@/types";
 import { HumanMessage, AIMessage, SystemMessage, ToolMessage, isSystemMessage } from "@langchain/core/messages";
+import { CallbackHandler } from "langfuse-langchain";
 
 import { AgentUtils } from "@/agent/utils";
 import { AgentCommands } from "@/agent/commands";
@@ -102,11 +103,18 @@ export async function POST(req: Request) {
         let config = {
             "configurable": {
                 "thread_id": crypto.randomUUID(),
-            }
+                "accessToken": session.accessToken
+            },
         };
+        const langfuseHandler = new CallbackHandler({
+            publicKey: "pk-lf-ef313424-35f5-4514-8fb2-6d30b6b5526f",
+            secretKey: "sk-lf-64c939a5-736b-43ec-9cfc-ca2a6bc5005f",
+            baseUrl: "https://cloud.langfuse.com"
+        });
+
         const stream = agent.streamEvents(
             { messages: langchainMessages },
-            { version: "v2", signal: req.signal, ...config }
+            { version: "v2", signal: req.signal, callbacks: [langfuseHandler], ...config }
         );
 
         // Create a readable stream for the response
