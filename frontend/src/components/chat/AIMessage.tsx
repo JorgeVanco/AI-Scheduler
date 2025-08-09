@@ -26,21 +26,21 @@ const AIUIMessage = ({ message }: AIMessageProps) => {
 
                 return (
                     <div key={index} style={{
-                        backgroundColor: isCompleted ? '#f0f8ff' : '#fff8dc',
-                        border: `1px solid ${isCompleted ? '#0066cc' : '#ffa500'}`,
+                        backgroundColor: isCompleted ? (toolContent.includes("Error: ") ? '#f9efefff' : '#f0f8ff') : '#fff8dc',
+                        border: `1px solid ${isCompleted ? (toolContent.includes("Error: ") ? '#ff0000' : '#0066cc') : '#ffa500'}`,
                         padding: '8px',
                         borderRadius: '4px',
                         margin: '0.5em 0'
                     }}>
                         <div style={{
                             fontSize: '0.8em',
-                            color: isCompleted ? '#0066cc' : '#ff8c00',
+                            color: isCompleted ? (toolContent.includes("Error: ") ? '#ff0000' : '#0066cc') : '#ff8c00',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px'
                         }}>
                             {!isCompleted && <LoadingSpinner />}
-                            {isCompleted && <span className="text-green-600 text-xs">✓</span>}
+                            {isCompleted && <>{toolContent.includes("Error: ") ? <span className="text-red-600 text-xs">✗</span> : <span className="text-green-600 text-xs">✓</span>}</>}
                             <span>{toolContent}</span>
                         </div>
                     </div>

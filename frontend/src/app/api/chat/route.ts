@@ -83,8 +83,6 @@ export async function POST(req: Request) {
             priorityInsights
         );
 
-        console.log("System Message Content:", systemMessageContent);
-
         // Stream the response
         const langchainMessages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = [new SystemMessage(systemMessageContent), ...messages.map(msg => {
             if (msg.id.includes('HumanMessage')) {
@@ -155,9 +153,25 @@ export async function POST(req: Request) {
                                 content: `</tool id="${toolId}">`,
                                 toolName: name,
                                 output: data?.output,
-                                toolId: data?.output.tool_call_id
+                                toolId: data?.output?.tool_call_id
                             })}\n\n`;
                             controller.enqueue(encoder.encode(toolData));
+                        }
+
+                        else if (event === "on_chain_start") {
+                            // Handle tool call failures
+                            if (data?.input?.messages[0].content?.includes("Error:")) {
+                                const toolId = data?.input?.messages[0].tool_call_id
+                                const errorMsg = data?.input?.messages[0].content || 'Unknown error';
+                                const errorData = `data: ${JSON.stringify({
+                                    type: 'tool_error',
+                                    content: `Tool call failed: ${errorMsg} </tool id="${toolId}">`,
+                                    toolName: name,
+                                    error: errorMsg,
+                                    toolId: toolId
+                                })}\n\n`;
+                                controller.enqueue(encoder.encode(errorData));
+                            }
                         }
 
                         else if (event === "on_chat_model_stream") {

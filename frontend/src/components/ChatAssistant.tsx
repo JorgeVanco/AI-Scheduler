@@ -94,6 +94,7 @@ const ChatAssistant = () => {
         abortControllerRef.current = new AbortController();
 
         let assistantContent = '';
+        let failedToolCalls = new Set<string>();
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -141,6 +142,13 @@ const ChatAssistant = () => {
                                     else if (parsed.type === 'tool_start') {
                                         assistantContent += parsed.content;
                                         setStreamingMessage(assistantContent);
+                                    }
+                                    else if (parsed.type === 'tool_error') {
+                                        if (!failedToolCalls.has(parsed.toolId)) {
+                                            failedToolCalls.add(parsed.toolId);
+                                            assistantContent += parsed.content;
+                                            setStreamingMessage(assistantContent);
+                                        }
                                     }
                                     else if (parsed.type === 'tool_end') {
                                         assistantContent += parsed.content + JSON.stringify(parsed.output);
