@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown';
+import { LoaderCircle } from 'lucide-react';
 
 interface AIMessageProps {
     message: string;
@@ -6,13 +7,10 @@ interface AIMessageProps {
 }
 
 const LoadingSpinner = () => (
-    <div className="inline-flex items-center">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
-        <span className="text-xs text-blue-600">Ejecutando...</span>
-    </div>
+    <LoaderCircle className="animate-spin h-4 w-4 bg-blue" />
 );
 
-const AIMessage = ({ message, toolsInProgress = new Set() }: AIMessageProps) => {
+const AIMessage = ({ message }: AIMessageProps) => {
 
     const renderMessage = (msg: string) => {
         const parts = msg.split(/(<tool id="[^"]+">[\s\S]*?(?:<\/tool id="[^"]+">|$))/);
@@ -25,7 +23,6 @@ const AIMessage = ({ message, toolsInProgress = new Set() }: AIMessageProps) => 
                 const toolId = toolStartMatch[1];
                 const toolContent = toolStartMatch[2];
                 const isCompleted = part.includes(`</tool id="${toolId}">`);
-                const isInProgress = toolsInProgress.has(toolId);
 
                 return (
                     <div key={index} style={{
@@ -38,23 +35,14 @@ const AIMessage = ({ message, toolsInProgress = new Set() }: AIMessageProps) => 
                         <div style={{
                             fontSize: '0.8em',
                             color: isCompleted ? '#0066cc' : '#ff8c00',
-                            // marginBottom: '4px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px'
+                            gap: '4px'
                         }}>
-                            <span>🔧 {toolContent}</span>
-                            {isInProgress && !isCompleted && <LoadingSpinner />}
-                            {isCompleted && <span className="text-green-600 text-xs">✓ Completado</span>}
+                            {!isCompleted && <LoadingSpinner />}
+                            {isCompleted && <span className="text-green-600 text-xs">✓</span>}
+                            <span>{toolContent}</span>
                         </div>
-                        {/* <pre style={{
-                            margin: 0,
-                            fontSize: '0.9em',
-                            whiteSpace: 'pre-wrap',
-                            opacity: isCompleted ? 1 : 0.7
-                        }}>
-                            {toolContent}
-                        </pre> */}
                     </div>
                 );
             }

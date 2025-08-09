@@ -1,6 +1,6 @@
 import { ChatOllama } from "@langchain/ollama";
 import { Message, ChatCalendarContext } from "@/types";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
+import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 
 import { getDateEvents, getNextXHoursEvents } from "@/agent/tools";
 import { AgentUtils } from "@/agent/utils";
@@ -76,13 +76,13 @@ export async function POST(req: Request) {
         );
 
         // Stream the response
-        const langchainMessages = messages.map(msg => {
+        const langchainMessages = [new SystemMessage(systemMessageContent), ...messages.map(msg => {
             if (msg.role === 'user') {
                 return new HumanMessage(msg.content);
             } else {
                 return new AIMessage(msg.content);
             }
-        });
+        })];
 
         const stream = await agent.streamEvents(
             { messages: langchainMessages },
@@ -96,7 +96,6 @@ export async function POST(req: Request) {
                 try {
                     for await (const chunk of stream) {
                         const { event, data, name } = chunk;
-                        console.log(chunk)
                         // on_tool_start does not give id, so we handle it here
                         if (event === "on_chat_model_end" && data.output.tool_calls?.length > 0) {
                             // Handle tool calls
