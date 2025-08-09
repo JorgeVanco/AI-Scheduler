@@ -1,5 +1,3 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -7,14 +5,14 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ taskListId: string }> }
 ) {
-    const session = await getServerSession(authOptions);
+    const accessToken = req.headers.get('x-access-token');
 
-    if (!session?.accessToken) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!accessToken) {
+        return NextResponse.json({ error: 'Access token required' }, { status: 401 });
     }
 
     const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: session.accessToken });
+    auth.setCredentials({ access_token: accessToken });
 
     const tasks = google.tasks({ version: 'v1', auth });
 
@@ -34,14 +32,14 @@ export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ taskListId: string }> }
 ) {
-    const session = await getServerSession(authOptions);
+    const accessToken = req.headers.get('x-access-token');
 
-    if (!session?.accessToken) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!accessToken) {
+        return NextResponse.json({ error: 'Access token required' }, { status: 401 });
     }
 
     const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: session.accessToken });
+    auth.setCredentials({ access_token: accessToken });
 
     const tasks = google.tasks({ version: 'v1', auth });
 

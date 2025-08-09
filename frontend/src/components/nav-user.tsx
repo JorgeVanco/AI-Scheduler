@@ -41,7 +41,6 @@ export function NavUser() {
         if ((session as any)?.error === "RefreshAccessTokenError") {
             signIn(); // Force sign in to hopefully resolve error
         }
-        console.log('Session:', session);
     }, [session]);
 
 

@@ -83,6 +83,12 @@ importers:
       googleapis:
         specifier: ^155.0.0
         version: 155.0.0
+      langfuse:
+        specifier: ^3.38.4
+        version: 3.38.4
+      langfuse-langchain:
+        specifier: ^3.38.4
+        version: 3.38.4(langchain@0.3.30(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(@langchain/ollama@0.2.3(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))))(@opentelemetry/api@1.9.0)(axios@1.11.0(debug@4.4.1))(openai@5.12.2(ws@8.18.3)(zod@4.0.14))(ws@8.18.3))
       lucide-react:
         specifier: ^0.536.0
         version: 0.536.0(react@19.1.0)
@@ -2815,6 +2821,20 @@ packages:
       typeorm:
         optional: true
 
+  langfuse-core@3.38.4:
+    resolution: {integrity: sha512-onTAqcEGhoXuBgqDFXe2t+bt9Vi+5YChRgdz3voM49JKoHwtVZQiUdqTfjSivGR75eSbYoiaIL8IRoio+jaqwg==}
+    engines: {node: '>=18'}
+
+  langfuse-langchain@3.38.4:
+    resolution: {integrity: sha512-7HJqouMrVOP9MFdu33M4G4uBFyQAIh/DqGYALfs41xqm7t99eZxKcTvt4rYZy67iQAhd58TG3q8+9haGzuLbOA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      langchain: '>=0.0.157 <0.4.0'
+
+  langfuse@3.38.4:
+    resolution: {integrity: sha512-2UqMeHLl3DGNX1Nh/cO4jGhk7TzDJ6gjQLlyS9rwFCKVO81xot6b58yeTsTB5YrWupWsOxQtMNoQYIQGOUlH9Q==}
+    engines: {node: '>=18'}
+
   langsmith@0.3.53:
     resolution: {integrity: sha512-cnEcJEiYjbcFQy7vTCQb7sR4w70UtBCu9loCOON+yYcK6T1lVmx27lQ4AF2KY7xzKY+FhbxWms5PV3SocizzaQ==}
     peerDependencies:
@@ -4296,7 +4316,7 @@ snapshots:
       flat: 5.0.2
       ibm-cloud-sdk-core: 5.4.2
       js-yaml: 4.1.0
-      langchain: 0.3.30(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(@langchain/ollama@0.2.3(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))))(@opentelemetry/api@1.9.0)(axios@1.11.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))(ws@8.18.3)
+      langchain: 0.3.30(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(@langchain/ollama@0.2.3(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))))(@opentelemetry/api@1.9.0)(axios@1.11.0(debug@4.4.1))(openai@5.12.2(ws@8.18.3)(zod@4.0.14))(ws@8.18.3)
       langsmith: 0.3.53(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))
       openai: 5.12.2(ws@8.18.3)(zod@4.0.14)
       uuid: 10.0.0
@@ -6148,7 +6168,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.11.0)
+      retry-axios: 2.6.0(axios@1.11.0(debug@4.4.1))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -6396,7 +6416,7 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  langchain@0.3.30(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(@langchain/ollama@0.2.3(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))))(@opentelemetry/api@1.9.0)(axios@1.11.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))(ws@8.18.3):
+  langchain@0.3.30(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(@langchain/ollama@0.2.3(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))))(@opentelemetry/api@1.9.0)(axios@1.11.0(debug@4.4.1))(openai@5.12.2(ws@8.18.3)(zod@4.0.14))(ws@8.18.3):
     dependencies:
       '@langchain/core': 0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))
       '@langchain/openai': 0.6.7(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(ws@8.18.3)
@@ -6419,6 +6439,20 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
       - ws
+
+  langfuse-core@3.38.4:
+    dependencies:
+      mustache: 4.2.0
+
+  langfuse-langchain@3.38.4(langchain@0.3.30(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(@langchain/ollama@0.2.3(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))))(@opentelemetry/api@1.9.0)(axios@1.11.0(debug@4.4.1))(openai@5.12.2(ws@8.18.3)(zod@4.0.14))(ws@8.18.3)):
+    dependencies:
+      langchain: 0.3.30(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)))(@langchain/ollama@0.2.3(@langchain/core@0.3.68(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14))))(@opentelemetry/api@1.9.0)(axios@1.11.0(debug@4.4.1))(openai@5.12.2(ws@8.18.3)(zod@4.0.14))(ws@8.18.3)
+      langfuse: 3.38.4
+      langfuse-core: 3.38.4
+
+  langfuse@3.38.4:
+    dependencies:
+      langfuse-core: 3.38.4
 
   langsmith@0.3.53(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.0.14)):
     dependencies:
@@ -7214,7 +7248,7 @@ snapshots:
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
-  retry-axios@2.6.0(axios@1.11.0):
+  retry-axios@2.6.0(axios@1.11.0(debug@4.4.1)):
     dependencies:
       axios: 1.11.0(debug@4.4.1)
 

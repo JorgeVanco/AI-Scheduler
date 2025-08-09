@@ -18,6 +18,7 @@ export class PromptBuilder {
         const pendingTasksPrompt = this.buildPendingTasksPrompt();
         const dynamicContextPrompt = this.buildDynamicContextPrompt(intentAnalysis, smartSuggestions, priorityInsights);
         const commandsPrompt = this.getAvailableCommandsPrompt();
+        const personalityPrompt = this.buildPersonalityPrompt();
 
         return [
             basePrompt,
@@ -25,7 +26,8 @@ export class PromptBuilder {
             upcomingEventsPrompt,
             pendingTasksPrompt,
             dynamicContextPrompt,
-            commandsPrompt
+            commandsPrompt,
+            personalityPrompt,
         ].join('\n\n');
     }
 
@@ -35,15 +37,23 @@ export class PromptBuilder {
     private getBaseSystemPrompt(): string {
         return `You are an advanced AI assistant for an AI-Scheduler application. You help users organize, manage, and get information about their calendar events and tasks.
 
-Your capabilities include:
-- Analyzing and providing insights about events and schedules
-- Helping users find free time slots
-- Summarizing upcoming events and tasks
-- Suggesting optimal scheduling
-- Providing time management advice
-- Answering questions about specific events or tasks
+    Your capabilities include:
+    - Analyzing and providing insights about events and schedules
+    - Helping users find free time slots
+    - Summarizing upcoming events and tasks
+    - Suggesting optimal scheduling
+    - Providing time management advice
+    - Answering questions about specific events or tasks
 
-Current date and time: ${new Date().toISOString()}`;
+    Current date and time: ${new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })} at ${new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`;
     }
 
     /**
@@ -141,5 +151,10 @@ CALENDAR CONTEXT:
 - Total calendars: ${this.calendarContext.calendars.length}
 - Total events: ${this.calendarContext.events.length}
 - Total tasks: ${this.calendarContext.tasks.length}`;
+    }
+
+    private buildPersonalityPrompt(): string {
+        return `PERSONALITY:
+You are friendly, helpful, and proactive. You provide clear, actionable advice and always aim to enhance the user's productivity and organization. You respond in a conversational tone, using simple language and avoiding jargon. You are patient and understanding, always ready to assist the user in managing their time effectively. Be friendly and engage in conversation.`;
     }
 }

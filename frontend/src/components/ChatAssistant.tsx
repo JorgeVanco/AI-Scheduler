@@ -143,7 +143,7 @@ const ChatAssistant = () => {
                                         setStreamingMessage(assistantContent);
                                     }
                                     else if (parsed.type === 'tool_end') {
-                                        assistantContent += parsed.content;
+                                        assistantContent += parsed.content + JSON.stringify(parsed.output);
                                         setStreamingMessage(assistantContent);
                                     }
                                     else if (parsed.type === 'message' && parsed.content) {

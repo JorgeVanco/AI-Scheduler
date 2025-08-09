@@ -1,12 +1,9 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
-    const session = await getServerSession(authOptions);
-
     const { searchParams } = new URL(req.url);
+    const accessToken = req.headers.get('x-access-token');
     const calendarId = searchParams.get('calendarId') || 'primary';
     const pageToken = searchParams.get('pageToken');
 
@@ -14,17 +11,17 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get('startDate') || midNight.toISOString();
     const endDate = searchParams.get('endDate') || new Date(midNight.getTime() + 24 * 60 * 60 * 1000).toISOString();
 
-    if (!session?.accessToken) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!accessToken) {
+        return NextResponse.json({ error: 'Access token required' }, { status: 401 });
     }
 
     const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: session.accessToken });
+    auth.setCredentials({ access_token: accessToken });
 
     const calendar = google.calendar({ version: 'v3', auth });
 
     try {
-        const requestParams: any = {
+        const requestParams: Record<string, unknown> = {
             calendarId: calendarId,
             timeMin: startDate,
             timeMax: endDate,
@@ -47,14 +44,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const session = await getServerSession(authOptions);
+    const accessToken = req.headers.get('x-access-token');
 
-    if (!session?.accessToken) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!accessToken) {
+        return NextResponse.json({ error: 'Access token required' }, { status: 401 });
     }
 
     const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: session.accessToken });
+    auth.setCredentials({ access_token: accessToken });
 
     const calendar = google.calendar({ version: 'v3', auth });
 
