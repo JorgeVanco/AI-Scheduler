@@ -1,0 +1,11 @@
+.calendarGrid {
+  display: grid;
+  grid-template-columns: 1fr 35%;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .calendarGrid {
+    grid-template-columns: 1fr;
+  }
+}
