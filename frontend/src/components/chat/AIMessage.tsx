@@ -13,6 +13,7 @@ const LoadingSpinner = () => (
 const AIUIMessage = ({ message }: AIMessageProps) => {
 
     const renderMessage = (msg: string) => {
+        msg = msg.replace(/analysis[\s\S]*?assistantfinal/g, '');
         const parts = msg.split(/(<tool id="[^"]+">[\s\S]*?(?:<\/tool id="[^"]+">|$))/);
 
         return parts.map((part, index) => {
