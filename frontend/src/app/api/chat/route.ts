@@ -15,6 +15,17 @@ import agent from "@/agent/agent";
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+interface ChatMessage {
+    id: string;
+    content: string;
+    role: 'user' | 'assistant' | 'system';
+    kwargs: {
+        content: string;
+        tool_call_id: string;
+        name: string;
+    };
+}
+
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -23,7 +34,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { messages, calendarContext }: { messages: BaseMessage[]; calendarContext: ChatCalendarContext } = await req.json();
+        const { messages, calendarContext }: { messages: ChatMessage[]; calendarContext: ChatCalendarContext } = await req.json();
 
         // Get the latest message from the user
         const lastMessage = messages[messages.length - 1];
@@ -84,22 +95,19 @@ export async function POST(req: Request) {
         );
 
         // Stream the response
-        const langchainMessages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = [
-            new SystemMessage(systemMessageContent), 
-            ...messages.map(msg => {
-                // Since messages are already BaseMessage instances, we can use them directly
-                if (msg instanceof HumanMessage) {
-                    return msg;
-                } else if (msg instanceof AIMessage) {
-                    return msg;
-                } else if (msg instanceof ToolMessage) {
-                    return msg;
-                } else {
-                    // Fallback: create new message based on content
-                    return new AIMessage(typeof msg.content === 'string' ? msg.content : '');
-                }
-            })
-        ];
+        const langchainMessages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = [new SystemMessage(systemMessageContent), ...messages.map(msg => {
+            if (msg.id.includes('HumanMessage')) {
+                return new HumanMessage(msg.kwargs.content);
+            }
+            else if (msg.id.includes('AIMessageChunk')) {
+                return new AIMessage(msg.kwargs.content);
+            }
+            else if (msg.id.includes('ToolMessage')) {
+                return new ToolMessage(msg.kwargs.content, msg.kwargs.tool_call_id, msg.kwargs.name);
+            } else {
+                return new AIMessage(msg.kwargs.content); // Default to AIMessage for other cases
+            }
+        })];
 
         const config = {
             "configurable": {

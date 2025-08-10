@@ -131,7 +131,7 @@ export const useCalendarLogic = () => {
             setIsLoadingEvents(false);
             return {};
         }
-    }, [calendars, indexEventsByDate]);
+    }, [calendars]);
 
     // Get the optimal date range to load (current month ± 3 months)
     const getOptimalRange = useCallback((centerDate = currentDate) => {
