@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { NextResponse } from 'next/server';
@@ -18,11 +19,13 @@ export const maxDuration = 30;
 interface ChatMessage {
     id: string;
     content: string;
-    role: 'user' | 'assistant' | 'system';
+    role: 'user' | 'assistant' | 'system' | 'tool';
     kwargs: {
         content: string;
         tool_call_id: string;
         name: string;
+        tool_calls?: any[];
+        additional_kwargs?: any;
     };
 }
 
@@ -96,16 +99,32 @@ export async function POST(req: Request) {
 
         // Stream the response
         const langchainMessages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = [new SystemMessage(systemMessageContent), ...messages.map(msg => {
-            if (msg.id.includes('HumanMessage')) {
+            if (msg.role === 'user' || msg.id.includes('HumanMessage')) {
                 return new HumanMessage(msg.kwargs.content);
             }
-            else if (msg.id.includes('AIMessageChunk')) {
-                return new AIMessage(msg.kwargs.content);
+            else if (msg.role === 'assistant' || msg.id.includes('AIMessage') || msg.id.includes('AIMessageChunk')) {
+                // Create AIMessage and preserve tool_calls
+                const aiMessage = new AIMessage(msg.kwargs.content);
+                if (msg.kwargs.tool_calls) {
+                    aiMessage.tool_calls = msg.kwargs.tool_calls;
+                }
+                if (msg.kwargs.additional_kwargs) {
+                    aiMessage.additional_kwargs = msg.kwargs.additional_kwargs;
+                }
+                return aiMessage;
             }
-            else if (msg.id.includes('ToolMessage')) {
+            else if (msg.role === 'tool' || msg.id.includes('ToolMessage')) {
                 return new ToolMessage(msg.kwargs.content, msg.kwargs.tool_call_id, msg.kwargs.name);
             } else {
-                return new AIMessage(msg.kwargs.content); // Default to AIMessage for other cases
+                // Fallback - create AIMessage
+                const aiMessage = new AIMessage(msg.kwargs.content);
+                if (msg.kwargs.tool_calls) {
+                    aiMessage.tool_calls = msg.kwargs.tool_calls;
+                }
+                if (msg.kwargs.additional_kwargs) {
+                    aiMessage.additional_kwargs = msg.kwargs.additional_kwargs;
+                }
+                return aiMessage;
             }
         })];
 
@@ -115,10 +134,11 @@ export async function POST(req: Request) {
                 "accessToken": session.accessToken
             },
         };
+
         const langfuseHandler = new CallbackHandler({
-            publicKey: "pk-lf-ef313424-35f5-4514-8fb2-6d30b6b5526f",
-            secretKey: "sk-lf-64c939a5-736b-43ec-9cfc-ca2a6bc5005f",
-            baseUrl: "https://cloud.langfuse.com"
+            publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+            secretKey: process.env.LANGFUSE_SECRET_KEY,
+            baseUrl: process.env.LANGFUSE_BASE_URL || 'https://cloud.langfuse.com',
         });
 
         const stream = agent.streamEvents(
@@ -199,9 +219,56 @@ export async function POST(req: Request) {
                     }
 
                     if (finalAgentMessages.length > 0) {
+                        // Serialize messages properly to preserve all properties
+                        const serializedMessages = finalAgentMessages.map(msg => {
+                            const baseMsg = {
+                                id: msg.id,
+                                content: msg.content,
+                                additional_kwargs: msg.additional_kwargs,
+                                response_metadata: msg.response_metadata
+                            };
+
+                            // Check message type by constructor name or id
+                            const messageType = msg.constructor?.name || '';
+                            const isAIMessage = messageType === 'AIMessage' || messageType === 'AIMessageChunk' ||
+                                (msg.id && (msg.id.includes('AIMessage') || msg.id.includes('AIMessageChunk')));
+                            const isHumanMessage = messageType === 'HumanMessage' ||
+                                (msg.id && msg.id.includes('HumanMessage'));
+                            const isToolMessage = messageType === 'ToolMessage' ||
+                                (msg.id && msg.id.includes('ToolMessage'));
+
+                            if (isAIMessage) {
+                                return {
+                                    ...baseMsg,
+                                    type: 'ai',
+                                    tool_calls: (msg as any).tool_calls,
+                                    tool_call_chunks: (msg as any).tool_call_chunks,
+                                    invalid_tool_calls: (msg as any).invalid_tool_calls,
+                                    usage_metadata: (msg as any).usage_metadata
+                                };
+                            } else if (isHumanMessage) {
+                                return {
+                                    ...baseMsg,
+                                    type: 'human'
+                                };
+                            } else if (isToolMessage) {
+                                return {
+                                    ...baseMsg,
+                                    type: 'tool',
+                                    tool_call_id: (msg as any).tool_call_id,
+                                    name: (msg as any).name
+                                };
+                            } else {
+                                return {
+                                    ...baseMsg,
+                                    type: 'unknown'
+                                };
+                            }
+                        });
+
                         const finalStateData = `data: ${JSON.stringify({
                             type: 'final_conversation',
-                            agentMessages: finalAgentMessages
+                            agentMessages: serializedMessages
                         })}\n\n`;
                         controller.enqueue(encoder.encode(finalStateData));
                     }

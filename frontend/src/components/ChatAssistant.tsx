@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 'use client';
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Ellipsis, Square } from "lucide-react"
@@ -95,6 +96,7 @@ const ChatAssistant = () => {
 
         let assistantContent = '';
         const failedToolCalls = new Set<string>();
+        let finalAssistantMessage = null; // Store the final assistant message with tool_calls
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -102,7 +104,38 @@ const ChatAssistant = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    messages: agentMessages.concat([userMessage]),
+                    messages: agentMessages.concat([userMessage]).map(msg => {
+                        // Determine role using _getType method or fallback to id analysis
+                        let role = 'system';
+                        if (msg._getType) {
+                            const msgType = msg._getType();
+                            role = msgType === 'human' ? 'user' :
+                                msgType === 'ai' ? 'assistant' :
+                                    msgType === 'tool' ? 'tool' : 'system';
+                        } else if (msg.id) {
+                            // Fallback: analyze id for type information
+                            if (msg.id.includes('HumanMessage')) {
+                                role = 'user';
+                            } else if (msg.id.includes('AIMessage') || msg.id.includes('AIMessageChunk')) {
+                                role = 'assistant';
+                            } else if (msg.id.includes('ToolMessage')) {
+                                role = 'tool';
+                            }
+                        }
+
+                        return {
+                            id: msg.id || crypto.randomUUID(),
+                            content: msg.content,
+                            role: role,
+                            kwargs: {
+                                content: msg.content,
+                                tool_call_id: (msg as any).tool_call_id || '',
+                                name: (msg as any).name || '',
+                                tool_calls: (msg as any).tool_calls,
+                                additional_kwargs: (msg as any).additional_kwargs
+                            }
+                        };
+                    }),
                     calendarContext: chatCalendarContext,
                 }),
                 signal: abortControllerRef.current.signal, // Add signal for cancellation
@@ -137,7 +170,49 @@ const ChatAssistant = () => {
                                 try {
                                     const parsed = JSON.parse(data);
                                     if (parsed.type === 'final_conversation') {
+                                        // Update both the agentMessages and get the final assistant message
                                         setAgentMessages(parsed.agentMessages);
+                                        // Get the last AI message from the final conversation
+                                        const lastAIMessage = parsed.agentMessages
+                                            .filter((msg: any) => msg.type === 'ai')
+                                            .pop();
+                                        if (lastAIMessage) {
+                                            // Reconstruct the AIMessage with all properties
+                                            const reconstructedMsg = new AIMessage(lastAIMessage.content);
+                                            reconstructedMsg.id = lastAIMessage.id;
+                                            if (lastAIMessage.tool_calls) {
+                                                reconstructedMsg.tool_calls = lastAIMessage.tool_calls;
+                                            }
+                                            if (lastAIMessage.additional_kwargs) {
+                                                reconstructedMsg.additional_kwargs = lastAIMessage.additional_kwargs;
+                                            }
+                                            if (lastAIMessage.response_metadata) {
+                                                reconstructedMsg.response_metadata = lastAIMessage.response_metadata;
+                                            }
+                                            finalAssistantMessage = reconstructedMsg;
+                                        }
+
+                                        // Also reconstruct the full agentMessages array
+                                        const reconstructedAgentMessages = parsed.agentMessages.map((msg: any) => {
+                                            if (msg.type === 'ai') {
+                                                const aiMsg = new AIMessage(msg.content);
+                                                aiMsg.id = msg.id;
+                                                if (msg.tool_calls) aiMsg.tool_calls = msg.tool_calls;
+                                                if (msg.additional_kwargs) aiMsg.additional_kwargs = msg.additional_kwargs;
+                                                if (msg.response_metadata) aiMsg.response_metadata = msg.response_metadata;
+                                                return aiMsg;
+                                            } else if (msg.type === 'human') {
+                                                const humanMsg = new HumanMessage(msg.content);
+                                                humanMsg.id = msg.id;
+                                                return humanMsg;
+                                            } else if (msg.type === 'tool') {
+                                                const toolMsg = new ToolMessage(msg.content, msg.tool_call_id, msg.name);
+                                                toolMsg.id = msg.id;
+                                                return toolMsg;
+                                            }
+                                            return msg;
+                                        });
+                                        setAgentMessages(reconstructedAgentMessages);
                                     }
                                     else if (parsed.type === 'tool_start') {
                                         assistantContent += parsed.content;
@@ -176,11 +251,27 @@ const ChatAssistant = () => {
             } else if ((error as Error).message === 'Unauthorized') {
                 assistantContent = 'Por favor, inicie sesión para continuar.';
             } else {
+                console.log(error)
                 assistantContent = 'Lo siento, hubo un error al procesar tu mensaje. Asegúrate de que Ollama esté ejecutándose en tu sistema.';
             }
         } finally {
-            const assistantMessage = new AIMessage(assistantContent);
+            // Use the final assistant message from LangGraph if available, otherwise create a new one
+            let assistantMessage;
+            if (finalAssistantMessage) {
+                // Use the complete message from LangGraph (includes tool_calls)
+                assistantMessage = finalAssistantMessage;
+            } else {
+                // Fallback to creating a new AIMessage with the streamed content
+                assistantMessage = new AIMessage(assistantContent);
+            }
+
             setMessages(prev => [...prev, assistantMessage]);
+
+            // Make sure agentMessages stays in sync - if we didn't get final conversation update, add the message manually
+            if (!finalAssistantMessage) {
+                setAgentMessages(prev => [...prev, assistantMessage]);
+            }
+
             setStreamingMessage('');
             setIsLoading(false);
             setWaitingForResponse(false);

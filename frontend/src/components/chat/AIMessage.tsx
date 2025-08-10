@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from "remark-gfm";
 import { LoaderCircle } from 'lucide-react';
 
 interface AIMessageProps {
@@ -51,6 +52,7 @@ const AIUIMessage = ({ message }: AIMessageProps) => {
             return (
                 <ReactMarkdown
                     key={index}
+                    remarkPlugins={[remarkGfm]}
                     components={{
                         p: ({ children }) => <p style={{ margin: '0.3em 0', lineHeight: '1.3', textAlign: 'left' }}>{children}</p>,
                         code: ({ children }) => (
