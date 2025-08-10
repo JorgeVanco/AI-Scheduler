@@ -1,4 +1,4 @@
-import { Event, Task, Calendar } from '@/types';
+import { Event, Task } from '@/types';
 
 const getDateEvents = (events: Event[], date: Date): Event[] => {
     const startOfDay = new Date(date);

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 import {
     Collapsible,
@@ -11,26 +11,18 @@ import {
     SidebarGroupContent,
     SidebarGroupLabel,
     SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
     SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { useCalendarContext } from "@/context/calendarContext";
 import { Checkbox } from "@/components/ui/checkbox"
+import { Calendar } from "@/types"
 
 export function CalendarGroup({
     calendars,
     name,
     index,
 }: {
-    calendars: {
-        name: string;
-        id: string;
-        backgroundColor: string;
-        summaryOverride: string;
-        summary: string;
-        accessRole: string;
-    }[];
+    calendars: Calendar[];
     name: string;
     index: number;
 }) {
@@ -56,7 +48,7 @@ export function CalendarGroup({
                     <CollapsibleContent>
                         <SidebarGroupContent>
                             <SidebarMenu>
-                                {calendars.map((calendar: { id: string; name: string; backgroundColor: string, summaryOverride: string, summary: string, accessRole: string }) => (
+                                {calendars.map((calendar: Calendar) => (
                                     <div
                                         key={calendar.id}
                                         className="flex flex-row items-center gap-2"

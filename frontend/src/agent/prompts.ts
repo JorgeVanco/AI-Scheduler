@@ -1,6 +1,12 @@
 import { ChatCalendarContext } from "@/types";
 import { getNextXHoursEvents } from "./tools";
 
+export interface IntentAnalysis {
+    intent?: string;
+    contextualInfo?: string;
+    suggestions?: string[];
+}
+
 export class PromptBuilder {
     private calendarContext: ChatCalendarContext;
 
@@ -11,7 +17,7 @@ export class PromptBuilder {
     /**
      * Builds the system prompt with dynamic calendar context
      */
-    buildSystemPrompt(intentAnalysis: any, smartSuggestions: string[], priorityInsights: string): string {
+    buildSystemPrompt(intentAnalysis: IntentAnalysis, smartSuggestions: string[], priorityInsights: string): string {
         const basePrompt = this.getBaseSystemPrompt();
         const calendarContextPrompt = this.buildCalendarContextPrompt();
         const upcomingEventsPrompt = this.buildUpcomingEventsPrompt();
@@ -141,13 +147,13 @@ Current date: ${new Date().toLocaleDateString('en-US', {
     /**
      * Builds dynamic context section with user intent analysis
      */
-    private buildDynamicContextPrompt(intentAnalysis: any, smartSuggestions: string[], priorityInsights: string): string {
+    private buildDynamicContextPrompt(intentAnalysis: IntentAnalysis, smartSuggestions: string[], priorityInsights: string): string {
         return `Be helpful, concise, and actionable in your responses.
 
 USER INTENT ANALYSIS:
 - Detected intent: ${intentAnalysis.intent}
 - Context: ${intentAnalysis.contextualInfo}
-- Suggestions: ${intentAnalysis.suggestions.join(', ')}
+- Suggestions: ${intentAnalysis.suggestions?.join(', ') || 'None'}
 
 SMART INSIGHTS:
 ${smartSuggestions.length > 0 ? smartSuggestions.join('\n') : 'No immediate insights available.'}

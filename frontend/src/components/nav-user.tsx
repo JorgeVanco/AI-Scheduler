@@ -38,7 +38,7 @@ export function NavUser() {
     const { data: session } = useSession();
 
     useEffect(() => {
-        if ((session as any)?.error === "RefreshAccessTokenError") {
+        if (session && 'error' in session && session.error === "RefreshAccessTokenError") {
             signIn(); // Force sign in to hopefully resolve error
         }
     }, [session]);

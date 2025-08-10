@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useCalendarContext } from '@/context/calendarContext';
 
 export const useCalendarLogic = () => {
@@ -66,7 +66,7 @@ export const useCalendarLogic = () => {
     };
 
     // Load events for a date range (optimized bulk loading)
-    const loadEventsForRange = async (startDate, endDate) => {
+    const loadEventsForRange = useCallback(async (startDate, endDate) => {
         
         setIsLoadingEvents(true);
         
@@ -131,10 +131,10 @@ export const useCalendarLogic = () => {
             setIsLoadingEvents(false);
             return {};
         }
-    };
+    }, [calendars, indexEventsByDate]);
 
     // Get the optimal date range to load (current month ± 3 months)
-    const getOptimalRange = (centerDate = currentDate) => {
+    const getOptimalRange = useCallback((centerDate = currentDate) => {
         const start = new Date(centerDate);
         start.setMonth(start.getMonth() - 3);
         start.setDate(1);
@@ -145,10 +145,10 @@ export const useCalendarLogic = () => {
         end.setHours(23, 59, 59, 999);
         
         return { start, end };
-    };
+    }, [currentDate]);
 
     // Check if we need to load more events
-    const needsEventLoading = (date) => {
+    const needsEventLoading = useCallback((date) => {
         if (!loadedRange.start || !loadedRange.end) return true;
         
         const checkDate = new Date(date);
@@ -159,7 +159,7 @@ export const useCalendarLogic = () => {
         endWithMargin.setMonth(endWithMargin.getMonth() - 1);
         
         return checkDate < startWithMargin || checkDate > endWithMargin;
-    };
+    }, [loadedRange.start, loadedRange.end]);
 
     // Get events for a specific date (fast lookup)
     const getEventsForDate = (date) => {
@@ -244,7 +244,7 @@ export const useCalendarLogic = () => {
                 loadEventsForRange(start, end);
             }
         }
-    }, [currentDate, calendars]);
+    }, [currentDate, calendars, getOptimalRange, loadEventsForRange, needsEventLoading]);
 
     // Initial load when calendars are first available
     useEffect(() => {
@@ -252,7 +252,7 @@ export const useCalendarLogic = () => {
             const { start, end } = getOptimalRange(currentDate);
             loadEventsForRange(start, end);
         }
-    }, [calendars]);
+    }, [calendars, currentDate, getOptimalRange, loadEventsForRange, loadedRange.start]);
 
     // Generate calendar days for month view
     const generateCalendarDays = () => {

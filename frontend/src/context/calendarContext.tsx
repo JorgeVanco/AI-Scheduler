@@ -92,7 +92,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                 .map((cal: Calendar) => cal.id);
             setSelectedCalendarIds(new Set(defaultSelected));
         }
-    }, [calendars]);
+    }, [calendars, selectedCalendarIds.size]);
 
     const updateCalendarSelected = async (calendarId: string, selected: boolean) => {
         try {

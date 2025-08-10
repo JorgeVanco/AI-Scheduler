@@ -1,4 +1,4 @@
-import { ChatCalendarContext, Event, Task } from '@/types';
+import { ChatCalendarContext, Event } from '@/types';
 import {
     getDateEvents,
     getNextXHoursEvents,

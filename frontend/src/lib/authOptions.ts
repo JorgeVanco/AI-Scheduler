@@ -1,10 +1,13 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import { JWT } from 'next-auth/jwt';
+import { User, Account, Session } from 'next-auth';
 
 declare module 'next-auth' {
     interface Session {
         accessToken?: string;
         refreshToken?: string;
+        error?: string;
     }
 }
 
@@ -16,7 +19,7 @@ declare module 'next-auth/jwt' {
 }
 
 
-async function refreshAccessToken(token: { refreshToken: any; }) {
+async function refreshAccessToken(token: { refreshToken: string; }) {
     try {
         const url =
             "https://oauth2.googleapis.com/token?" +
@@ -73,12 +76,12 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, user, account }: { token: any; user?: any; account?: any }) {
+        async jwt({ token, user, account }: { token: JWT; user?: User; account?: Account | null }) {
             // Initial sign in
             if (account && user) {
                 return {
                     accessToken: account.access_token,
-                    accessTokenExpires: Date.now() + account.refresh_token_expires_in * 1000,
+                    accessTokenExpires: Date.now() + (Number(account.expires_in) || 3600) * 1000,
                     refreshToken: account.refresh_token,
                     user,
                 }
@@ -90,13 +93,13 @@ export const authOptions: NextAuthOptions = {
             // }
 
             // Access token has expired, try to update it
-            return refreshAccessToken(token)
+            return token.refreshToken ? refreshAccessToken(token as { refreshToken: string }) : token
         },
-        async session({ session, token }: { session: any; token: any }) {
+        async session({ session, token }: { session: Session; token: JWT }) {
             if (token) {
-                session.user = token.user
-                session.accessToken = token.accessToken
-                session.error = token.error
+                session.user = token.user as typeof session.user;
+                session.accessToken = token.accessToken as string;
+                session.error = token.error as string;
             }
 
             return session

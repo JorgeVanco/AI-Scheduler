@@ -3,6 +3,7 @@
 export interface Calendar {
     id: string;
     summary: string;
+    summaryOverride?: string;
     description?: string;
     timeZone?: string;
     backgroundColor: string;

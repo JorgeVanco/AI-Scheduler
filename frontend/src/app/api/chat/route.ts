@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/authOptions';
 import { NextResponse } from 'next/server';
 
 import { ChatCalendarContext } from "@/types";
-import { HumanMessage, AIMessage, SystemMessage, ToolMessage, isSystemMessage } from "@langchain/core/messages";
+import { HumanMessage, AIMessage, SystemMessage, ToolMessage, isSystemMessage, BaseMessage } from "@langchain/core/messages";
 import { CallbackHandler } from "langfuse-langchain";
 
 import { AgentUtils } from "@/agent/utils";
@@ -23,11 +23,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { messages, calendarContext }: { messages: any[]; calendarContext: ChatCalendarContext } = await req.json();
+        const { messages, calendarContext }: { messages: BaseMessage[]; calendarContext: ChatCalendarContext } = await req.json();
 
         // Get the latest message from the user
         const lastMessage = messages[messages.length - 1];
-        const userPrompt = lastMessage?.content || '';
+        const userPrompt = typeof lastMessage?.content === 'string' ? lastMessage.content : '';
 
         // Initialize agent utilities
         const agentUtils = new AgentUtils(calendarContext);
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         }
 
         if (detectedCommand) {
-            const commandResult = agentCommands.executeCommand(detectedCommand, commandParams);
+            const commandResult = agentCommands.executeCommand(detectedCommand, commandParams ? { date: commandParams } : undefined);
 
             if (commandResult.success) {
                 // Return command result as a stream
@@ -84,21 +84,24 @@ export async function POST(req: Request) {
         );
 
         // Stream the response
-        const langchainMessages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = [new SystemMessage(systemMessageContent), ...messages.map(msg => {
-            if (msg.id.includes('HumanMessage')) {
-                return new HumanMessage(msg.kwargs.content);
-            }
-            else if (msg.id.includes('AIMessageChunk')) {
-                return new AIMessage(msg.kwargs.content);
-            }
-            else if (msg.id.includes('ToolMessage')) {
-                return new ToolMessage(msg.kwargs.content, msg.kwargs.tool_calls);
-            } else {
-                return new AIMessage(msg.kwargs.content); // Default to AIMessage for other cases
-            }
-        })];
+        const langchainMessages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = [
+            new SystemMessage(systemMessageContent), 
+            ...messages.map(msg => {
+                // Since messages are already BaseMessage instances, we can use them directly
+                if (msg instanceof HumanMessage) {
+                    return msg;
+                } else if (msg instanceof AIMessage) {
+                    return msg;
+                } else if (msg instanceof ToolMessage) {
+                    return msg;
+                } else {
+                    // Fallback: create new message based on content
+                    return new AIMessage(typeof msg.content === 'string' ? msg.content : '');
+                }
+            })
+        ];
 
-        let config = {
+        const config = {
             "configurable": {
                 "thread_id": crypto.randomUUID(),
                 "accessToken": session.accessToken
@@ -197,8 +200,8 @@ export async function POST(req: Request) {
 
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
-                } catch (error: any) {
-                    if (req.signal.aborted && error.name === 'AbortError') {
+                } catch (error: unknown) {
+                    if (req.signal.aborted && (error as Error).name === 'AbortError') {
                         console.log('Stream aborted');
                     } else {
                         console.error('Stream error:', error);

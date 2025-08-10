@@ -94,7 +94,7 @@ const ChatAssistant = () => {
         abortControllerRef.current = new AbortController();
 
         let assistantContent = '';
-        let failedToolCalls = new Set<string>();
+        const failedToolCalls = new Set<string>();
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -170,10 +170,10 @@ const ChatAssistant = () => {
                     }
                 }
             }
-        } catch (error: Error | any) {
-            if (abortControllerRef.current?.signal.aborted && error.name === 'AbortError') {
+        } catch (error: unknown) {
+            if (abortControllerRef.current?.signal.aborted && (error as Error).name === 'AbortError') {
                 console.log('Request aborted');
-            } else if (error.message === 'Unauthorized') {
+            } else if ((error as Error).message === 'Unauthorized') {
                 assistantContent = 'Por favor, inicie sesión para continuar.';
             } else {
                 assistantContent = 'Lo siento, hubo un error al procesar tu mensaje. Asegúrate de que Ollama esté ejecutándose en tu sistema.';
@@ -227,10 +227,10 @@ const ChatAssistant = () => {
                             Te ayudo a organizar tu calendario y tareas. Puedes preguntarme cosas como:
                         </div>
                         <div className="text-sm text-left max-w-md mx-auto space-y-1">
-                            <div>• "¿Qué tengo programado hoy?"</div>
-                            <div>• "Muéstrame mis tareas pendientes"</div>
-                            <div>• "¿Cuándo estoy libre?"</div>
-                            <div>• "¿Cómo está mi carga de trabajo?"</div>
+                            <div>• &quot;¿Qué tengo programado hoy?&quot;</div>
+                            <div>• &quot;Muéstrame mis tareas pendientes&quot;</div>
+                            <div>• &quot;¿Cuándo estoy libre?&quot;</div>
+                            <div>• &quot;¿Cómo está mi carga de trabajo?&quot;</div>
                         </div>
                         <div className="text-xs mt-4 text-gray-400">
                             💡 Tip: Haz clic en ⚡ para ver comandos rápidos

@@ -1,17 +1,11 @@
 import * as React from "react"
 import { CalendarGroup } from "./calendar-group"
+import { Calendar } from "@/types"
 
 export function Calendars({
     calendars,
 }: {
-    calendars: {
-        name: string;
-        id: string;
-        backgroundColor: string;
-        summaryOverride: string;
-        summary: string;
-        accessRole: string;
-    }[];
+    calendars: Calendar[];
 }) {
     const myCalendars = calendars.filter(cal => cal.accessRole === 'owner')
     const otherCalendars = calendars.filter(cal => cal.accessRole !== 'owner')

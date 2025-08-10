@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const calendar = google.calendar({ version: 'v3', auth });
 
     try {
-        const requestParams: any = {
+        const requestParams: Record<string, unknown> = {
             calendarId: calendarId,
             timeMin: startDate,
             timeMax: endDate,

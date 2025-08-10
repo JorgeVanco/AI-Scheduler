@@ -1,9 +1,9 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { google } from 'googleapis';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (!session?.accessToken) {

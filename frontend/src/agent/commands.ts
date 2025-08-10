@@ -1,4 +1,4 @@
-import { ChatCalendarContext, Event, Task } from '@/types';
+import { ChatCalendarContext } from '@/types';
 import {
     findFreeTimeSlots,
     getTasksSummary,
@@ -11,7 +11,13 @@ import {
 export interface CommandResult {
     success: boolean;
     message: string;
-    data?: any;
+    data?: unknown;
+}
+
+export interface CommandParams {
+    duration?: number;
+    date?: Date | string;
+    hours?: number;
 }
 
 export class AgentCommands {
@@ -225,7 +231,7 @@ export class AgentCommands {
     }
 
     // Execute command based on user input
-    public executeCommand(command: string, params?: any): CommandResult {
+    public executeCommand(command: string, params?: CommandParams): CommandResult {
         const cmd = command.toLowerCase().trim();
         console.log(`Executing command: ${cmd} with params:`, params);
         switch (cmd) {
@@ -237,7 +243,10 @@ export class AgentCommands {
             case 'tiempo-libre':
             case 'free-time':
             case 'horarios':
-                return this.findFreeTime(params?.duration || 60, params?.date);
+                return this.findFreeTime(
+                    params?.duration || 60, 
+                    params?.date ? (typeof params.date === 'string' ? new Date(params.date) : params.date) : undefined
+                );
 
             case 'tareas':
             case 'tasks':
@@ -245,7 +254,9 @@ export class AgentCommands {
 
             case 'carga':
             case 'workload':
-                return this.analyzeWorkloadForDate(params?.date);
+                return this.analyzeWorkloadForDate(
+                    params?.date ? (typeof params.date === 'string' ? new Date(params.date) : params.date) : undefined
+                );
 
             case 'próximos':
             case 'upcoming':
