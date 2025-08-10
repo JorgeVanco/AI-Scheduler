@@ -80,6 +80,37 @@ const AIUIMessage = ({ message }: AIMessageProps) => {
                         h3: ({ children }) => <h3 style={{ fontWeight: 'bold', margin: '0.3em 0', lineHeight: '1.2' }}>{children}</h3>,
                         strong: ({ children }) => <strong style={{ fontWeight: 'bold', }}>{children}</strong>,
                         em: ({ children }) => <em style={{ fontStyle: 'italic', }}>{children}</em>,
+                        table: ({ children }) => (
+                            <table style={{
+                                borderCollapse: 'collapse',
+                                margin: '0.5em 0',
+                                width: '100%',
+                                border: '1px solid #ddd'
+                            }}>
+                                {children}
+                            </table>
+                        ),
+                        thead: ({ children }) => <thead style={{ backgroundColor: '#f9f9f9' }}>{children}</thead>,
+                        tbody: ({ children }) => <tbody>{children}</tbody>,
+                        tr: ({ children }) => <tr style={{ borderBottom: '1px solid #ddd' }}>{children}</tr>,
+                        th: ({ children }) => (
+                            <th style={{
+                                padding: '8px 12px',
+                                textAlign: 'left',
+                                fontWeight: 'bold',
+                                border: '1px solid #ddd'
+                            }}>
+                                {children}
+                            </th>
+                        ),
+                        td: ({ children }) => (
+                            <td style={{
+                                padding: '8px 12px',
+                                border: '1px solid #ddd'
+                            }}>
+                                {children}
+                            </td>
+                        ),
                     }}
                 >
                     {part}

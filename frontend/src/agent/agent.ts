@@ -38,7 +38,6 @@ import { AIMessage, SystemMessage } from "@langchain/core/messages";
 const routeMessage = (state: typeof StateAnnotation.State) => {
     const { messages } = state;
     const lastMessage = messages[messages.length - 1] as AIMessage;
-    // console.log(messages)
     // If no tools are called, we can finish (respond to the user)
     if (!lastMessage?.tool_calls?.length) {
         return END;
