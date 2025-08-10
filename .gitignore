@@ -1,6 +1,7 @@
-*.json
+
 *.ipynb
 __pycache__
 .env
 personal_prompt.py
 venv/
+backend/
