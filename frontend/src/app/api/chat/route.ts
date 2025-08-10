@@ -115,10 +115,11 @@ export async function POST(req: Request) {
                 "accessToken": session.accessToken
             },
         };
+
         const langfuseHandler = new CallbackHandler({
-            publicKey: "pk-lf-ef313424-35f5-4514-8fb2-6d30b6b5526f",
-            secretKey: "sk-lf-64c939a5-736b-43ec-9cfc-ca2a6bc5005f",
-            baseUrl: "https://cloud.langfuse.com"
+            publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+            secretKey: process.env.LANGFUSE_SECRET_KEY,
+            baseUrl: process.env.LANGFUSE_BASE_URL || 'https://cloud.langfuse.com',
         });
 
         const stream = agent.streamEvents(
