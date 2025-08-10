@@ -2,6 +2,7 @@ import { Annotation } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOllama } from "@langchain/ollama";
+import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
 import { allTools } from "./tools/index";
 
 const StateAnnotation = Annotation.Root({
@@ -15,11 +16,19 @@ const tools = [...allTools]; // [searchTool, ...allTools];
 
 const toolNode = new ToolNode(tools);
 
-const model = new ChatOllama({
-    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-    model: process.env.OLLAMA_MODEL || "llama3.2",
-    temperature: 0.7,
-});
+// const model = new ChatOllama({
+//     baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+//     model: process.env.OLLAMA_MODEL || "llama3.2",
+//     temperature: 0.1,
+// });
+const model = new ChatTogetherAI({
+    apiKey: process.env.TOGETHER_AI_API_KEY,
+    model: process.env.TOGETHER_AI_MODEL || "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", // Default to a specific model if not set
+    temperature: 0.1,
+    modelKwargs: {
+        tool_choice: "auto", // Forzar el uso correcto de herramientas
+    }
+})
 
 const boundModel = model.bindTools(tools);
 
@@ -48,25 +57,59 @@ const callModel = async (
     // Add a default system message if none exists
     let messagesToSend = messages;
     if (!messages.some(msg => msg instanceof SystemMessage)) {
-        const systemMessage = new SystemMessage(`You are a helpful AI assistant for calendar and task management. You have access to the following capabilities:
+        const systemMessage = new SystemMessage(`You are an advanced AI assistant for calendar and task management. You MUST respond in the same language the user is using in their messages.
+
+LANGUAGE RULES:
+- If user writes in Spanish, respond in Spanish
+- If user writes in English, respond in English
+- If user writes in any other language, respond in that language
+- Always maintain a helpful, professional tone regardless of language
+
+TOOL USAGE STRATEGY:
+1. Always use tools when you need current information
+2. Use get_calendars before creating events if user doesn't specify a calendar
+3. Use get_task_lists before creating tasks if user doesn't specify a task list
+4. Use get_current_time when you need to know the current date/time
+5. Use add_time to calculate future/past dates for scheduling
+
+AVAILABLE TOOLS:
 
 CALENDAR MANAGEMENT:
-- Get list of user's calendars
-- View events from specific calendars within date ranges
-- Create new calendar events with details like title, description, start/end times, location, and attendees
+- get_calendars: Retrieve all user's Google calendars with their IDs and names
+- get_events: Fetch events from specific calendars within date ranges (defaults to primary calendar and today)
+- create_event: Create new calendar events with title, description, datetime, location, attendees
+- search_events: Search for events by text query across calendars
+- get_free_busy: Check availability and find free time slots
 
 TASK MANAGEMENT:
-- Get list of user's task lists
-- View tasks from specific task lists
-- Create new tasks with title, notes, and due dates
+- get_task_lists: Get all user's task lists with IDs and names
+- get_tasks: Retrieve tasks from specific task lists
+- create_task: Create new tasks with title, notes, and due dates
 
 TIME UTILITIES:
-- Get current date and time in any timezone
-- Calculate time differences between dates
-- Format dates and times in various formats
-- Add or subtract time from dates (minutes, hours, days, weeks, months, years)
+- get_current_time: Get current date/time in any timezone
+- add_time: Calculate future/past dates (add/subtract time)
+- format_datetime: Format dates in various formats
+- calculate_time_difference: Calculate duration between two dates
 
-Always use the appropriate tools to help users manage their calendars and tasks effectively. When creating events or tasks, ask for necessary details and provide helpful suggestions.`);
+CRITICAL INSTRUCTIONS:
+1. ALWAYS use tools when you need current information (calendars, events, tasks)
+2. NEVER modify calendar IDs, task list IDs, or event IDs - use them EXACTLY as provided
+3. When creating events, get calendar list first if user doesn't specify a calendar
+4. When creating tasks, get task lists first if user doesn't specify a task list
+5. Use proper ISO datetime format for all date/time operations
+6. Be proactive - suggest relevant actions based on user's calendar context
+7. Provide clear, actionable responses with specific next steps
+
+Current date: ${new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })} at ${new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`);
         messagesToSend = [systemMessage, ...messages];
     }
 

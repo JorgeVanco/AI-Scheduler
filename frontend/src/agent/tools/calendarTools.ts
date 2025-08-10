@@ -38,7 +38,7 @@ export const getCalendarsTool = tool(async ({ }, config) => {
     }
 }, {
     name: "get_calendars",
-    description: "Get a list of all Google calendars for the authenticated user",
+    description: "Get a comprehensive list of all Google calendars for the authenticated user. Use this first when user asks about calendars or wants to create events without specifying a calendar. Returns calendar IDs, names, and properties.",
     schema: z.object({}),
 });
 
@@ -74,7 +74,7 @@ export const getEventsTool = tool(async ({ calendarId, startDate, endDate }, con
     }
 }, {
     name: "get_events",
-    description: "Get events from a specific calendar within a date range",
+    description: "Get events from a specific calendar within a date range. Defaults to primary calendar and today's events if no parameters specified. Use this to check user's schedule or find existing events.",
     schema: z.object({
         calendarId: z.string().optional().describe("Calendar ID to fetch events from (defaults to 'primary')"),
         startDate: z.string().optional().describe("Start date in ISO format (defaults to today at midnight)"),
@@ -83,7 +83,7 @@ export const getEventsTool = tool(async ({ calendarId, startDate, endDate }, con
 });
 
 // Tool to create a new event
-export const createEventTool = tool(async ({ calendarId, title, description, startDateTime, endDateTime, location, attendees }, config) => {
+export const createEventTool = tool(async ({ calendarId = 'primary', title, description, startDateTime, endDateTime, location, attendees }, config) => {
     try {
         const accessToken = config?.configurable?.accessToken || config?.configurable?.userID;
         if (!accessToken) {
@@ -129,9 +129,9 @@ export const createEventTool = tool(async ({ calendarId, title, description, sta
     }
 }, {
     name: "create_event",
-    description: "Create a new calendar event",
+    description: "Create a new calendar event. Use get_calendars first if user doesn't specify a calendar. Always use EXACT calendar IDs from get_calendars - never modify them.",
     schema: z.object({
-        calendarId: z.string().optional().describe("Calendar ID where to create the event (defaults to 'primary')"),
+        calendarId: z.string().optional().describe("EXACT Calendar ID from get_calendars where to create the event - DO NOT MODIFY. Defaults to 'primary' if not specified by user"),
         title: z.string().describe("Event title/summary"),
         description: z.string().optional().describe("Event description"),
         startDateTime: z.string().describe("Start date and time in ISO format (e.g., '2023-12-25T10:00:00')"),
@@ -173,7 +173,7 @@ export const searchEventsTool = tool(async ({ query, calendarId, maxResults }, c
     }
 }, {
     name: "search_events",
-    description: "Search for events by text query across calendars",
+    description: "Search for events by text query across calendars. Use when user wants to find specific events by keywords.",
     schema: z.object({
         query: z.string().describe("Text to search for in event titles and descriptions"),
         calendarId: z.string().optional().describe("Calendar ID to search in (defaults to 'primary')"),

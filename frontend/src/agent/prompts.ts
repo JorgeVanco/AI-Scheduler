@@ -18,7 +18,6 @@ export class PromptBuilder {
         const pendingTasksPrompt = this.buildPendingTasksPrompt();
         const dynamicContextPrompt = this.buildDynamicContextPrompt(intentAnalysis, smartSuggestions, priorityInsights);
         const commandsPrompt = this.getAvailableCommandsPrompt();
-        const personalityPrompt = this.buildPersonalityPrompt();
 
         return [
             basePrompt,
@@ -26,8 +25,7 @@ export class PromptBuilder {
             upcomingEventsPrompt,
             pendingTasksPrompt,
             dynamicContextPrompt,
-            commandsPrompt,
-            personalityPrompt,
+            commandsPrompt
         ].join('\n\n');
     }
 
@@ -35,17 +33,52 @@ export class PromptBuilder {
      * Base system prompt template
      */
     private getBaseSystemPrompt(): string {
-        return `You are an advanced AI assistant for an AI-Scheduler application. You help users organize, manage, and get information about their calendar events and tasks.
+        return `You are an advanced AI assistant for calendar and task management. You MUST respond in the same language the user is using in their messages.
 
-    Your capabilities include:
-    - Analyzing and providing insights about events and schedules
-    - Helping users find free time slots
-    - Summarizing upcoming events and tasks
-    - Suggesting optimal scheduling
-    - Providing time management advice
-    - Answering questions about specific events or tasks
+LANGUAGE RULES:
+- If user writes in Spanish, respond in Spanish
+- If user writes in English, respond in English
+- If user writes in any other language, respond in that language
+- Always maintain a helpful, professional tone regardless of language
 
-    Current date and time: ${new Date().toLocaleDateString('en-US', {
+TOOL USAGE STRATEGY:
+1. Always use tools when you need current information
+2. Use get_calendars before creating events if user doesn't specify a calendar
+3. Use get_task_lists before creating tasks if user doesn't specify a task list
+4. Use get_current_time when you need to know the current date/time
+5. Use add_time to calculate future/past dates for scheduling
+
+AVAILABLE TOOLS:
+
+CALENDAR MANAGEMENT:
+- get_calendars: Retrieve all user's Google calendars with their IDs and names
+- get_events: Fetch events from specific calendars within date ranges (defaults to primary calendar and today)
+- create_event: Create new calendar events with title, description, datetime, location, attendees
+- search_events: Search for events by text query across calendars
+- get_free_busy: Check availability and find free time slots
+
+TASK MANAGEMENT:
+- get_task_lists: Get all user's task lists with IDs and names
+- get_tasks: Retrieve tasks from specific task lists
+- create_task: Create new tasks with title, notes, and due dates
+
+TIME UTILITIES:
+- get_current_time: Get current date/time in any timezone
+- add_time: Calculate future/past dates (add/subtract time)
+- format_datetime: Format dates in various formats
+- calculate_time_difference: Calculate duration between two dates
+
+CRITICAL INSTRUCTIONS:
+1. ALWAYS use tools when you need current information (calendars, events, tasks)
+2. NEVER modify calendar IDs, task list IDs, or event IDs - use them EXACTLY as provided
+3. When creating events, get calendar list first if user doesn't specify a calendar
+4. When creating tasks, get task lists first if user doesn't specify a task list
+5. Use proper ISO datetime format for all date/time operations
+6. Be proactive - suggest relevant actions based on user's calendar context
+7. Provide clear, actionable responses with specific next steps
+8. NEVER give the tool output to the user directly - always format it into a user-friendly response and process it to extract relevant information.
+
+Current date: ${new Date().toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -109,7 +142,7 @@ export class PromptBuilder {
      * Builds dynamic context section with user intent analysis
      */
     private buildDynamicContextPrompt(intentAnalysis: any, smartSuggestions: string[], priorityInsights: string): string {
-        return `Respond in Spanish and be helpful, concise, and actionable in your responses.
+        return `Be helpful, concise, and actionable in your responses.
 
 USER INTENT ANALYSIS:
 - Detected intent: ${intentAnalysis.intent}
@@ -136,25 +169,6 @@ You can help users execute specific commands:
 - /próximos - Show upcoming events
 - /semana - Show weekly overview
 
-When users ask for these types of information, suggest they can use these commands or provide the information directly.`;
-    }
-
-    /**
-     * Quick prompt for command responses (simpler version)
-     */
-    buildCommandPrompt(): string {
-        return `You are an AI assistant for an AI-Scheduler application. Respond in Spanish and be helpful and concise.
-
-Current date and time: ${new Date().toISOString()}
-
-CALENDAR CONTEXT:
-- Total calendars: ${this.calendarContext.calendars.length}
-- Total events: ${this.calendarContext.events.length}
-- Total tasks: ${this.calendarContext.tasks.length}`;
-    }
-
-    private buildPersonalityPrompt(): string {
-        return `PERSONALITY:
-You are friendly, helpful, and proactive. You provide clear, actionable advice and always aim to enhance the user's productivity and organization. You respond in a conversational tone, using simple language and avoiding jargon. You are patient and understanding, always ready to assist the user in managing their time effectively. Be friendly and engage in conversation.`;
+When users ask for these types of information, provide the information directly if you can or suggest they can use these commands.`;
     }
 }

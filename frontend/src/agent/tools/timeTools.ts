@@ -25,7 +25,7 @@ export const getCurrentTimeTool = tool(async ({ timezone }) => {
     }
 }, {
     name: "get_current_time",
-    description: "Get the current date and time in a specific timezone",
+    description: "Get the current date and time in a specific timezone. Use this when user asks for current time or when you need to know what time it is now.",
     schema: z.object({
         timezone: z.string().optional().describe("Timezone (e.g., 'America/New_York', 'Europe/Madrid'). Defaults to user's local timezone"),
     }),
@@ -62,7 +62,7 @@ export const calculateTimeDifferenceTool = tool(async ({ startTime, endTime }) =
     }
 }, {
     name: "calculate_time_difference",
-    description: "Calculate the time difference between two dates/times",
+    description: "Calculate the time difference between two dates/times. Use this to find duration between events or to calculate time spans.",
     schema: z.object({
         startTime: z.string().describe("Start date/time in ISO format (e.g., '2023-12-25T10:00:00Z')"),
         endTime: z.string().describe("End date/time in ISO format (e.g., '2023-12-25T11:30:00Z')"),
@@ -113,7 +113,7 @@ export const formatDateTimeTool = tool(async ({ dateTime, format, timezone }) =>
     }
 }, {
     name: "format_datetime",
-    description: "Format a date/time string in various formats",
+    description: "Format a date/time string in various formats. Use this to display dates in user-friendly formats or convert between different date representations.",
     schema: z.object({
         dateTime: z.string().describe("Date/time to format in ISO format"),
         format: z.enum(['iso', 'short', 'long', 'time', 'datetime']).optional().describe("Format type (defaults to 'datetime')"),
@@ -159,7 +159,7 @@ export const addTimeTool = tool(async ({ dateTime, amount, unit }) => {
     }
 }, {
     name: "add_time",
-    description: "Add a specific amount of time to a date/time",
+    description: "Add or subtract a specific amount of time to/from a date/time. Use this to calculate future or past dates, schedule events relative to other dates, or find dates X days/hours from now.",
     schema: z.object({
         dateTime: z.string().describe("Base date/time in ISO format"),
         amount: z.number().describe("Amount to add (can be negative to subtract)"),

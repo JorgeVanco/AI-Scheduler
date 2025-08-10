@@ -38,7 +38,7 @@ export const getTaskListsTool = tool(async ({ }, config) => {
     }
 }, {
     name: "get_task_lists",
-    description: "Get a list of all Google task lists for the authenticated user",
+    description: "Get a comprehensive list of all Google task lists for the authenticated user. Use this first when user asks about tasks or wants to create tasks without specifying a task list. Returns task list IDs, names, and properties.",
     schema: z.object({}),
 });
 
@@ -69,9 +69,9 @@ export const getTasksTool = tool(async ({ taskListId }, config) => {
     }
 }, {
     name: "get_tasks",
-    description: "Get tasks from a specific task list",
+    description: "Get tasks from a specific task list. Use this to check user's current tasks or find existing tasks in a particular list.",
     schema: z.object({
-        taskListId: z.string().describe("Task list ID to fetch tasks from"),
+        taskListId: z.string().describe("EXACT Task list ID from get_task_lists - DO NOT MODIFY"),
     }),
 });
 
@@ -118,9 +118,9 @@ export const createTaskTool = tool(async ({ taskListId, title, notes, dueDate },
     }
 }, {
     name: "create_task",
-    description: "Create a new task in a specific task list",
+    description: "Create a new task in a specific task list. Use get_task_lists first if user doesn't specify a task list. Always use EXACT task list IDs from get_task_lists - never modify them.",
     schema: z.object({
-        taskListId: z.string().describe("Task list ID where to create the task"),
+        taskListId: z.string().describe("EXACT Task list ID from get_task_lists where to create the task - DO NOT MODIFY"),
         title: z.string().describe("Task title"),
         notes: z.string().optional().describe("Task notes/description"),
         dueDate: z.string().optional().describe("Due date in RFC 3339 format (e.g., '2023-12-25T10:00:00Z')"),
