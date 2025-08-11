@@ -20,13 +20,14 @@ export const getCalendarsTool = tool(async ({ }, config) => {
         }
 
         const baseUrl = getBaseUrl();
+        console.log("Fetching calendars in tool from:", baseUrl);
         const response = await fetch(`${baseUrl}/api/agent/calendars`, {
             headers: {
                 'x-access-token': accessToken,
                 'Content-Type': 'application/json',
             },
         });
-
+        console.log("Calendars response status:", response.status, response.statusText);
         if (!response.ok) {
             throw new Error(`Failed to fetch calendars: ${response.statusText}`);
         }
