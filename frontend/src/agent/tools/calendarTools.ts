@@ -91,6 +91,14 @@ export const createEventTool = tool(async ({ calendarId = 'primary', title, desc
             throw new Error("Access token not provided");
         }
 
+        if (!endDateTime) {
+            endDateTime = new Date(new Date(startDateTime).getTime() + 60 * 60 * 1000).toISOString(); // Default to 1 hour after start time
+        }
+
+        if (!attendees) {
+            attendees = [];
+        }
+
         const event = {
             summary: title,
             description: description,
@@ -130,16 +138,19 @@ export const createEventTool = tool(async ({ calendarId = 'primary', title, desc
     }
 }, {
     name: "create_event",
-    description: "Create a new calendar event. Use get_calendars first if user doesn't specify a calendar. Always use EXACT calendar IDs from get_calendars - never modify them.",
+    description: "Create a new calendar event. It uses primary calendar if not specified. Must add the title, startDateTime, endDateTime. Always use EXACT calendar IDs from get_calendars - never modify them.",
     schema: z.object({
         calendarId: z.string().optional().describe("EXACT Calendar ID from get_calendars where to create the event - DO NOT MODIFY. Defaults to 'primary' if not specified by user"),
         title: z.string().describe("Event title/summary"),
         description: z.string().optional().describe("Event description"),
         startDateTime: z.string().describe("Start date and time in ISO format (e.g., '2023-12-25T10:00:00')"),
-        endDateTime: z.string().describe("End date and time in ISO format (e.g., '2023-12-25T11:00:00')"),
+        endDateTime: z.string().optional().describe("End date and time in ISO format (e.g., '2023-12-25T11:00:00'). If not set, it defaults to 1 hour after startDateTime."),
         location: z.string().optional().describe("Event location"),
-        attendees: z.array(z.string()).optional().describe("Array of attendee email addresses"),
-    }),
+        attendees: z.union([
+            z.array(z.string()),
+            z.literal("")
+        ]).optional().describe("Array of attendee email addresses"),
+    })
 });
 
 // Tool to search events by text
@@ -183,11 +194,15 @@ export const searchEventsTool = tool(async ({ query, calendarId, maxResults }, c
 });
 
 // Tool to check free/busy time for calendars
-export const getFreeBusyTool = tool(async ({ calendars, startDateTime, endDateTime }, config) => {
+export const getFreeBusyTool = tool(async ({ calendars = "primary", startDateTime, endDateTime }, config) => {
     try {
         const accessToken = config?.configurable?.accessToken || config?.configurable?.userID;
         if (!accessToken) {
             throw new Error("Access token not provided");
+        }
+
+        if (!calendars) {
+            calendars = ["primary"];
         }
 
         const baseUrl = getBaseUrl();
@@ -217,7 +232,10 @@ export const getFreeBusyTool = tool(async ({ calendars, startDateTime, endDateTi
     name: "get_free_busy",
     description: "Check free/busy time for one or more calendars to find available time slots",
     schema: z.object({
-        calendars: z.array(z.string()).describe("Array of calendar IDs to check (e.g., ['primary', 'calendar-id-2'])"),
+        calendars: z.union([
+            z.array(z.string()),
+            z.literal("")
+        ]).optional().describe("Array of calendar IDs to check (e.g., ['primary', 'calendar-id-2']). It defaults to primary if left empty."),
         startDateTime: z.string().describe("Start date and time in ISO format"),
         endDateTime: z.string().describe("End date and time in ISO format"),
     }),

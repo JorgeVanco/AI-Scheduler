@@ -83,6 +83,7 @@ CRITICAL INSTRUCTIONS:
 6. Be proactive - suggest relevant actions based on user's calendar context
 7. Provide clear, actionable responses with specific next steps
 8. NEVER give the tool output to the user directly - always format it into a user-friendly response and process it to extract relevant information.
+9. NEVER show IDs of calendars, tasks, or events to the user - always use names or titles.
 
 Current date: ${new Date().toLocaleDateString('en-US', {
             weekday: 'long',

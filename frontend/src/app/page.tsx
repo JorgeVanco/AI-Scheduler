@@ -21,41 +21,11 @@ import styles from "./styles.module.css";
 
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import { useCalendarContext } from "@/context/calendarContext";
-import { useEffect } from "react";
 
 export default function Home() {
 
   const { view, selectedDate } = useCalendarContext();
-  const {
-    currentDate,
-    showEventForm,
-    newEventTitle,
-    currentTime,
-    setShowEventForm,
-    setNewEventTitle,
-    generateCalendarDays,
-    isToday,
-    isSameMonth,
-    formatTime,
-    generateHours,
-    getPositionFromTime,
-    getCurrentTimePosition,
-    handleDateClick,
-    handleBackToMonth,
-    navigateMonth,
-    navigateDay,
-    createEvent,
-    handleDragStart,
-    handleDragOver,
-    handleDrop,
-    getEventsForDate,
-    deleteEvent
-  } = useCalendarLogic();
-
-  useEffect(() => {
-
-    console.log(view)
-  }, [view])
+  const { currentDate } = useCalendarLogic();
 
   return (
     <SidebarProvider>

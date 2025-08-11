@@ -1,7 +1,7 @@
 import { Annotation } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-// import { ChatOllama } from "@langchain/ollama";
+import { ChatOllama } from "@langchain/ollama";
 import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
 import { allTools } from "./tools/index";
 
@@ -16,19 +16,19 @@ const tools = [...allTools]; // [searchTool, ...allTools];
 
 const toolNode = new ToolNode(tools);
 
-// const model = new ChatOllama({
-//     baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-//     model: process.env.OLLAMA_MODEL || "llama3.2",
-//     temperature: 0.1,
-// });
-const model = new ChatTogetherAI({
-    apiKey: process.env.TOGETHER_AI_API_KEY,
-    model: process.env.TOGETHER_AI_MODEL || "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", // Default to a specific model if not set
+const model = new ChatOllama({
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    model: process.env.OLLAMA_MODEL || "llama3.2",
     temperature: 0.1,
-    modelKwargs: {
-        tool_choice: "auto", // Forzar el uso correcto de herramientas
-    }
-})
+});
+// const model = new ChatTogetherAI({
+//     apiKey: process.env.TOGETHER_AI_API_KEY,
+//     model: process.env.TOGETHER_AI_MODEL || "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", // Default to a specific model if not set
+//     temperature: 0.1,
+//     modelKwargs: {
+//         tool_choice: "auto", // Forzar el uso correcto de herramientas
+//     }
+// })
 
 const boundModel = model.bindTools(tools);
 
