@@ -19,7 +19,43 @@ import {
 
 import styles from "./styles.module.css";
 
+import { useCalendarLogic } from "@/hooks/useCalendarLogic";
+import { useCalendarContext } from "@/context/calendarContext";
+import { useEffect } from "react";
+
 export default function Home() {
+
+  const { view, selectedDate } = useCalendarContext();
+  const {
+    currentDate,
+    showEventForm,
+    newEventTitle,
+    currentTime,
+    setShowEventForm,
+    setNewEventTitle,
+    generateCalendarDays,
+    isToday,
+    isSameMonth,
+    formatTime,
+    generateHours,
+    getPositionFromTime,
+    getCurrentTimePosition,
+    handleDateClick,
+    handleBackToMonth,
+    navigateMonth,
+    navigateDay,
+    createEvent,
+    handleDragStart,
+    handleDragOver,
+    handleDrop,
+    getEventsForDate,
+    deleteEvent
+  } = useCalendarLogic();
+
+  useEffect(() => {
+
+    console.log(view)
+  }, [view])
 
   return (
     <SidebarProvider>
@@ -34,7 +70,15 @@ export default function Home() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbPage>October 2024</BreadcrumbPage>
+                <BreadcrumbPage>{view === 'day' && selectedDate ? (selectedDate as Date).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) : currentDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                })}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

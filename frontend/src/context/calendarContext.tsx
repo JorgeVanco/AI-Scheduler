@@ -23,6 +23,9 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [hasFetched, setHasFetched] = useState(false);
     const [selectedCalendarIds, setSelectedCalendarIds] = useState<Set<string>>(new Set());
+    const [view, setView] = useState<'month' | 'day'>('month');
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     const { data: session } = useSession();
 
@@ -148,7 +151,13 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
             selectedCalendarIds,
             setSelectedCalendarIds,
             toggleCalendar,
-            updateCalendarSelected
+            updateCalendarSelected,
+            view,
+            setView,
+            selectedDate,
+            setSelectedDate,
+            currentDate,
+            setCurrentDate
         }}>
             {children}
         </CalendarContext.Provider>

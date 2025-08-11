@@ -3,6 +3,7 @@
 import React from 'react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { useCalendarLogic } from '@/hooks/useCalendarLogic';
+import { useCalendarContext } from '@/context/calendarContext';
 import {
     CalendarHeader,
     DayView,
@@ -12,10 +13,9 @@ import {
 } from './calendar';
 
 const Calendar = () => {
+    const { view, selectedDate } = useCalendarContext();
     const {
         currentDate,
-        selectedDate,
-        view,
         showEventForm,
         newEventTitle,
         currentTime,
@@ -102,7 +102,6 @@ const Calendar = () => {
                     navigateDay={navigateDay}
                     handleBackToMonth={handleBackToMonth}
                 >
-                    <EventLegend />
                 </CalendarHeader>
             </CardHeader>
 

@@ -7,7 +7,7 @@ export default function TaskItem({ task }: { task: Task }) {
                 <input
                     type="checkbox"
                     id={task.id}
-                    checked={task.status === 'completed'}
+                    defaultChecked={task.status === 'completed'}
                     className="w-4 h-4 rounded-full border-2 border-gray-300 cursor-pointer"
                 />
                 <label
