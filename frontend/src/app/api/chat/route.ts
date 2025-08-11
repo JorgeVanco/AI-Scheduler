@@ -169,22 +169,22 @@ export async function POST(req: Request) {
                             for (const toolCall of data.output.tool_calls) {
                                 const toolData = `data: ${JSON.stringify({
                                     type: 'tool_start',
-                                    content: `<tool id="${toolCall.id}">Tool called: ${toolCall.name}`,
+                                    content: `Tool called: ${toolCall.name}`,
                                     toolName: toolCall.name,
-                                    toolId: toolCall.id
+                                    tool_call_id: toolCall.id
                                 })}\n\n`;
                                 controller.enqueue(encoder.encode(toolData));
                             }
                         }
 
                         else if (event === "on_tool_end") {
-                            const toolId = data?.output?.tool_call_id || name;
+                            const tool_call_id = data?.output?.tool_call_id || name;
                             const toolData = `data: ${JSON.stringify({
                                 type: 'tool_end',
-                                content: `</tool id="${toolId}">`,
+                                content: ``,
                                 toolName: name,
                                 output: data?.output,
-                                toolId: data?.output?.tool_call_id
+                                tool_call_id: data?.output?.tool_call_id
                             })}\n\n`;
                             controller.enqueue(encoder.encode(toolData));
                         }
@@ -192,14 +192,14 @@ export async function POST(req: Request) {
                         else if (event === "on_chain_start") {
                             // Handle tool call failures
                             if (data?.input?.messages[0].content?.includes("Error:")) {
-                                const toolId = data?.input?.messages[0].tool_call_id
+                                const tool_call_id = data?.input?.messages[0].tool_call_id
                                 const errorMsg = data?.input?.messages[0].content || 'Unknown error';
                                 const errorData = `data: ${JSON.stringify({
                                     type: 'tool_error',
-                                    content: `Tool call failed: ${errorMsg} </tool id="${toolId}">`,
+                                    content: `Tool call failed: ${errorMsg}`,
                                     toolName: name,
                                     error: errorMsg,
-                                    toolId: toolId
+                                    tool_call_id: tool_call_id
                                 })}\n\n`;
                                 controller.enqueue(encoder.encode(errorData));
                             }

@@ -9,7 +9,44 @@ import { HumanMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
 import { useCalendarContext } from "@/context/calendarContext";
 
 import { ChatCalendarContext } from "@/types";
+import { LoaderCircle } from "lucide-react";
 
+const LoadingSpinner = () => (
+    <LoaderCircle className="animate-spin h-4 w-4 bg-blue" />
+);
+
+const ToolMessageUI = (
+    { toolMessage, toolStates }:
+        { toolMessage: ToolMessage, toolStates: Record<string, any> }
+) => {
+
+
+    const toolState = toolStates[toolMessage.tool_call_id]
+    const toolStatus = toolState?.status || 'tool_end';
+
+    const toolContent = toolMessage.content as string;
+    const isCompleted = !toolState || toolStatus === 'tool_end' || toolStatus === 'tool_error';
+
+    return <div style={{
+        backgroundColor: isCompleted ? (toolStatus === 'tool_error' ? '#f9efefff' : '#f0f8ff') : '#fff8dc',
+        border: `1px solid ${isCompleted ? (toolStatus === 'tool_error' ? '#ff0000' : '#0066cc') : '#ffa500'}`,
+        padding: '8px',
+        borderRadius: '4px',
+        margin: '0'
+    }}>
+        <div style={{
+            fontSize: '0.8em',
+            color: isCompleted ? (toolStatus === 'tool_error' ? '#ff0000' : '#0066cc') : '#ff8c00',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+        }}>
+            {!isCompleted && <LoadingSpinner />}
+            {isCompleted && <>{toolStatus === 'tool_error' ? <span className="text-red-600 text-xs">✗</span> : <span className="text-green-600 text-xs">✓</span>}</>}
+            <span>{toolContent}</span>
+        </div>
+    </div>
+}
 
 const ChatAssistant = () => {
     const [messages, setMessages] = useState<(HumanMessage | AIMessage | ToolMessage)[]>([]); // UI messages with tool tags
@@ -23,6 +60,7 @@ const ChatAssistant = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const [chatCalendarContext, setChatCalendarContext] = useState<ChatCalendarContext | null>(null);
+    const [toolStates, setToolStates] = useState<Record<string, any>>({});
 
     const { calendars, tasks, events } = useCalendarContext();
 
@@ -90,6 +128,7 @@ const ChatAssistant = () => {
         setIsLoading(true);
         setStreamingMessage('');
         setWaitingForResponse(true);
+        setToolStates({});
 
         // Create a new AbortController for this request
         abortControllerRef.current = new AbortController();
@@ -215,19 +254,41 @@ const ChatAssistant = () => {
                                         setAgentMessages(reconstructedAgentMessages);
                                     }
                                     else if (parsed.type === 'tool_start') {
-                                        assistantContent += parsed.content;
-                                        setStreamingMessage(assistantContent);
+                                        if (assistantContent) {
+                                            setMessages(prev => [...prev, new AIMessage(assistantContent)]);
+                                            messages.push(new AIMessage(assistantContent));
+                                            assistantContent = '';
+                                        }
+                                        setMessages(prev => [...prev, new ToolMessage(parsed.content, parsed.tool_call_id, parsed.toolName)]);
+                                        setToolStates(prev => ({
+                                            ...prev,
+                                            [parsed.tool_call_id]: {
+                                                name: parsed.toolName,
+                                                content: parsed.content,
+                                                status: 'tool_start',
+                                            }
+                                        }));
                                     }
                                     else if (parsed.type === 'tool_error') {
-                                        if (!failedToolCalls.has(parsed.toolId)) {
-                                            failedToolCalls.add(parsed.toolId);
-                                            assistantContent += parsed.content;
-                                            setStreamingMessage(assistantContent);
+                                        if (!failedToolCalls.has(parsed.tool_call_id)) {
+                                            failedToolCalls.add(parsed.tool_call_id);
+                                            setToolStates(prev => ({
+                                                ...prev,
+                                                [parsed.tool_call_id]: {
+                                                    ...prev[parsed.tool_call_id], // Preserve existing values from tool_start
+                                                    status: 'tool_error',
+                                                }
+                                            }));
                                         }
                                     }
                                     else if (parsed.type === 'tool_end') {
-                                        assistantContent += parsed.content;
-                                        setStreamingMessage(assistantContent);
+                                        setToolStates(prev => ({
+                                            ...prev,
+                                            [parsed.tool_call_id]: {
+                                                ...prev[parsed.tool_call_id], // Preserve existing values from tool_start
+                                                status: 'tool_end',
+                                            }
+                                        }));
                                     }
                                     else if (parsed.type === 'message' && parsed.content) {
                                         assistantContent += parsed.content;
@@ -334,18 +395,22 @@ const ChatAssistant = () => {
                     }}>
                         {msg._getType() === "ai" ? (
                             <AIUIMessage message={msg.content as string} />
-                        ) : (
-                            <div style={{
-                                background: "#d1e7dd",
-                                borderRadius: 6,
-                                padding: "4px 8px",
-                                display: "inline-block",
-                                maxWidth: "80%",
-                                wordWrap: "break-word"
-                            }}>
-                                <AIUIMessage message={msg.content as string} />
-                            </div>
-                        )}
+                        ) : msg._getType() === "tool" ? (
+                            <ToolMessageUI toolMessage={msg as ToolMessage} toolStates={toolStates} />
+                        )
+                            : (
+                                <div style={{
+                                    background: "#d1e7dd",
+                                    borderRadius: 6,
+                                    padding: "4px 8px",
+                                    display: "inline-block",
+                                    maxWidth: "80%",
+                                    wordWrap: "break-word"
+                                }}>
+                                    <AIUIMessage message={msg.content as string} />
+                                </div>
+                            )
+                        }
                     </div>
                     )
                 })}
@@ -380,25 +445,27 @@ const ChatAssistant = () => {
             </div>
 
             {/* Quick Commands */}
-            {showQuickCommands && (
-                <div className="mx-4 mb-2 p-3 bg-gray-50 rounded-lg border">
-                    <div className="text-sm font-medium text-gray-700 mb-2">Comandos rápidos:</div>
-                    <div className="grid grid-cols-2 gap-2">
-                        {quickCommands.map((cmd, index) => (
-                            <Button
-                                key={index}
-                                variant="ghost"
-                                size="sm"
-                                className="justify-start text-left text-xs h-8"
-                                onClick={() => handleQuickCommand(cmd.command)}
-                                disabled={isLoading}
-                            >
-                                {cmd.label}
-                            </Button>
-                        ))}
+            {
+                showQuickCommands && (
+                    <div className="mx-4 mb-2 p-3 bg-gray-50 rounded-lg border">
+                        <div className="text-sm font-medium text-gray-700 mb-2">Comandos rápidos:</div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {quickCommands.map((cmd, index) => (
+                                <Button
+                                    key={index}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="justify-start text-left text-xs h-8"
+                                    onClick={() => handleQuickCommand(cmd.command)}
+                                    disabled={isLoading}
+                                >
+                                    {cmd.label}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="relative mx-4">
                 <form onSubmit={handleSubmit}>
@@ -450,7 +517,7 @@ const ChatAssistant = () => {
                     </div>
                 </form>
             </div>
-        </div>
+        </div >
     );
 };
 
