@@ -245,12 +245,3 @@ export const getFreeBusyTool = tool(async ({ calendars = "primary", startDateTim
         endDateTime: z.string().describe("End date and time in ISO format"),
     }),
 });
-
-
-let time = "2025-08-21T15:00:00-05:00"
-console.log("Intl.DateTimeFormat().resolvedOptions().timeZone")
-console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
-
-// Extract timezone from ISO format time
-const timezone = time.match(/([+-]\d{2}:\d{2}|Z)$/)?.[1];
-console.log("Timezone from ISO string:", timezone);
