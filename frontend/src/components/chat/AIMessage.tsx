@@ -12,9 +12,17 @@ const LoadingSpinner = () => (
 );
 
 const AIUIMessage = ({ message }: AIMessageProps) => {
-
     const renderMessage = (msg: string) => {
-        msg = msg.replace(/analysis[\s\S]*?assistantfinal/g, '');
+        // Limpiar usando los patrones exactos que recibes
+        msg = msg.replace(/analysis\S+[\s\S]*?(assistantfinal|$)/gi, '');
+        msg = msg.replace(/<think>[\s\S]*?<\/think>/gi, '');
+
+        if (!msg) {
+            return <div className="text-gray-500 flex align-center gap-1 text-xs"><LoadingSpinner /> Thinking</div>;
+        }
+
+        // Remover cualquier prefijo hasta "assistantfinal"
+        msg = msg.replace(/^[\s\S]*?assistantfinal/gi, '');
         const parts = msg.split(/(<tool id="[^"]+">[\s\S]*?(?:<\/tool id="[^"]+">|$))/);
 
         return parts.map((part, index) => {
