@@ -1,7 +1,7 @@
 import { Annotation } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { ChatOllama } from "@langchain/ollama";
+// import { ChatOllama } from "@langchain/ollama";
 import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
 import { allTools } from "./tools/index";
 
@@ -16,19 +16,16 @@ const tools = [...allTools]; // [searchTool, ...allTools];
 
 const toolNode = new ToolNode(tools);
 
-const model = new ChatOllama({
-    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-    model: process.env.OLLAMA_MODEL || "llama3.2",
-    temperature: 0.1,
-});
-// const model = new ChatTogetherAI({
-//     apiKey: process.env.TOGETHER_AI_API_KEY,
-//     model: process.env.TOGETHER_AI_MODEL || "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", // Default to a specific model if not set
+// const model = new ChatOllama({
+//     baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+//     model: process.env.OLLAMA_MODEL || "llama3.2",
 //     temperature: 0.1,
-//     modelKwargs: {
-//         tool_choice: "auto", // Forzar el uso correcto de herramientas
-//     }
-// })
+// });
+const model = new ChatTogetherAI({
+    apiKey: process.env.TOGETHER_AI_API_KEY,
+    model: process.env.TOGETHER_AI_MODEL || "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", // Default to a specific model if not set
+    temperature: 0.1,
+})
 
 const boundModel = model.bindTools(tools);
 
@@ -99,6 +96,9 @@ CRITICAL INSTRUCTIONS:
 5. Use proper ISO datetime format for all date/time operations
 6. Be proactive - suggest relevant actions based on user's calendar context
 7. Provide clear, actionable responses with specific next steps
+8. When managing times that are in different timezones, think if it is an online event that might require timezone conversion, or if the time should be kept because the user might be in that timezone when it requires.
+9. When creating many events at the same time, first list them to make sure you do not mess it up, and then create them one by one. Do not create any test events.
+
 
 Current date: ${new Date().toLocaleDateString('en-US', {
             weekday: 'long',

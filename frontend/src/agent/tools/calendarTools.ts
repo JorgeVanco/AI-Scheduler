@@ -84,7 +84,7 @@ export const getEventsTool = tool(async ({ calendarId, startDate, endDate }, con
 });
 
 // Tool to create a new event
-export const createEventTool = tool(async ({ calendarId = 'primary', title, description, startDateTime, endDateTime, location, attendees }, config) => {
+export const createEventTool = tool(async ({ calendarId = 'primary', title, description, startDateTime, endDateTime, location, attendees, timezone }, config) => {
     try {
         const accessToken = config?.configurable?.accessToken || config?.configurable?.userID;
         if (!accessToken) {
@@ -99,17 +99,21 @@ export const createEventTool = tool(async ({ calendarId = 'primary', title, desc
             attendees = [];
         }
 
+        if (!timezone) {
+            timezone = Intl.DateTimeFormat().resolvedOptions().timeZone; // Use user's local timezone if not specified
+        }
+
         const event = {
             summary: title,
             description: description,
             location: location,
             start: {
                 dateTime: startDateTime,
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timeZone: timezone,
             },
             end: {
                 dateTime: endDateTime,
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timeZone: timezone,
             },
             attendees: attendees?.map((email: string) => ({ email })) || [],
         };
@@ -150,6 +154,7 @@ export const createEventTool = tool(async ({ calendarId = 'primary', title, desc
             z.array(z.string()),
             z.literal("")
         ]).optional().describe("Array of attendee email addresses"),
+        timezone: z.string().optional().describe("Timezone (e.g., 'America/New_York', 'Europe/Madrid'). Defaults to user's local timezone if not specified"),
     })
 });
 
@@ -240,3 +245,12 @@ export const getFreeBusyTool = tool(async ({ calendars = "primary", startDateTim
         endDateTime: z.string().describe("End date and time in ISO format"),
     }),
 });
+
+
+let time = "2025-08-21T15:00:00-05:00"
+console.log("Intl.DateTimeFormat().resolvedOptions().timeZone")
+console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+// Extract timezone from ISO format time
+const timezone = time.match(/([+-]\d{2}:\d{2}|Z)$/)?.[1];
+console.log("Timezone from ISO string:", timezone);
