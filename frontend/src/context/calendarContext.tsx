@@ -12,6 +12,7 @@ import {
     GoogleTaskListResponse,
     GoogleTaskResponse
 } from '@/types';
+import { id } from 'zod/v4/locales';
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
@@ -72,7 +73,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                                 .then((res) => res.json())
                                 .then((data: GoogleTaskResponse) => {
                                     if (data.items) {
-                                        setTasks(prevTasks => [...prevTasks, ...data.items]);
+                                        setTasks(prevTasks => [...prevTasks, ...data.items.map((task) => ({ taskListId: taskList.id, ...task }))]);
                                     }
                                     console.log("tasks:", data.items);
                                 });
