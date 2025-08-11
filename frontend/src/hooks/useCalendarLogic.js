@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useCalendarContext } from '@/context/calendarContext';
 
 export const useCalendarLogic = () => {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [view, setView] = useState('month'); // 'month' or 'day'
     const [localEvents, setLocalEvents] = useState([]);
     const [showEventForm, setShowEventForm] = useState(false);
     const [newEventTitle, setNewEventTitle] = useState('');
@@ -14,7 +11,7 @@ export const useCalendarLogic = () => {
     const [loadedRange, setLoadedRange] = useState({ start: null, end: null });
     const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
-    const { calendars, selectedCalendarIds } = useCalendarContext();
+    const { calendars, selectedCalendarIds, setView, selectedDate, setSelectedDate, currentDate, setCurrentDate } = useCalendarContext();
 
     // Get date key for indexing (YYYY-MM-DD format)
     const getDateKey = (date) => {
@@ -410,8 +407,6 @@ export const useCalendarLogic = () => {
     return {
         // State
         currentDate,
-        selectedDate,
-        view,
         localEvents,
         showEventForm,
         newEventTitle,
@@ -423,8 +418,6 @@ export const useCalendarLogic = () => {
         
         // Setters
         setCurrentDate,
-        setSelectedDate,
-        setView,
         setLocalEvents,
         setShowEventForm,
         setNewEventTitle,

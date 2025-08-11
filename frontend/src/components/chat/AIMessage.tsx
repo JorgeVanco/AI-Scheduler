@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from "remark-gfm";
 import { LoaderCircle } from 'lucide-react';
+import React from "react";
 
 interface AIMessageProps {
     message: string;
@@ -114,14 +115,23 @@ const AIUIMessage = ({ message }: AIMessageProps) => {
                                 {children}
                             </th>
                         ),
-                        td: ({ children }) => (
-                            <td style={{
-                                padding: '8px 12px',
-                                border: '1px solid #ddd'
-                            }}>
-                                {children}
-                            </td>
-                        ),
+                        td: ({ children }) => {
+                            const content = React.Children.map(children, c => {
+                                if (c == "<br>") {
+                                    return <br />;
+                                }
+                                return c;
+                            });
+                            return (
+                                <td style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #ddd'
+                                }}>
+                                    {content}
+                                </td>
+                            )
+                        },
+                        br: () => <br />,
                     }}
                 >
                     {part}

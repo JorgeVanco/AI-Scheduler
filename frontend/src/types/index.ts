@@ -149,6 +149,12 @@ export interface CalendarContextType {
     setSelectedCalendarIds: (ids: Set<string>) => void;
     toggleCalendar: (calendarId: string) => Promise<void>;
     updateCalendarSelected: (calendarId: string, selected: boolean) => Promise<void>;
+    view: 'month' | 'day';
+    setView: (view: 'month' | 'day') => void;
+    selectedDate: Date | null;
+    setSelectedDate: (date: Date | null) => void;
+    currentDate: Date;
+    setCurrentDate: (date: Date) => void;
 }
 
 // Tipos para el contexto del chat

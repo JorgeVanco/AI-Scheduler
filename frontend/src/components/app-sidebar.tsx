@@ -2,6 +2,7 @@ import * as React from "react"
 import { Plus } from "lucide-react"
 
 import { Calendars } from "@/components/calendars"
+import { Tasks } from "@/components/tasks"
 import { NavUser } from "@/components/nav-user"
 import {
     Sidebar,
@@ -18,7 +19,7 @@ import { useCalendarContext } from "@/context/calendarContext"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-    const { calendars } = useCalendarContext();
+    const { calendars, taskLists, tasks } = useCalendarContext();
 
     return (
         <Sidebar {...props}>
@@ -29,6 +30,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {/* <DatePicker /> */}
                 <SidebarSeparator className="mx-0" />
                 <Calendars calendars={calendars} />
+                <SidebarSeparator className="mx-0" />
+                <Tasks taskLists={taskLists} tasks={tasks} />
             </SidebarContent>
             <SidebarFooter>
                 <SidebarMenu>

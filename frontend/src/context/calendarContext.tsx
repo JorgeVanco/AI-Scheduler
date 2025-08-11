@@ -12,6 +12,7 @@ import {
     GoogleTaskListResponse,
     GoogleTaskResponse
 } from '@/types';
+import { id } from 'zod/v4/locales';
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
@@ -22,6 +23,9 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [hasFetched, setHasFetched] = useState(false);
     const [selectedCalendarIds, setSelectedCalendarIds] = useState<Set<string>>(new Set());
+    const [view, setView] = useState<'month' | 'day'>('month');
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     const { data: session } = useSession();
 
@@ -72,7 +76,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
                                 .then((res) => res.json())
                                 .then((data: GoogleTaskResponse) => {
                                     if (data.items) {
-                                        setTasks(prevTasks => [...prevTasks, ...data.items]);
+                                        setTasks(prevTasks => [...prevTasks, ...data.items.map((task) => ({ taskListId: taskList.id, ...task }))]);
                                     }
                                     console.log("tasks:", data.items);
                                 });
@@ -147,7 +151,13 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
             selectedCalendarIds,
             setSelectedCalendarIds,
             toggleCalendar,
-            updateCalendarSelected
+            updateCalendarSelected,
+            view,
+            setView,
+            selectedDate,
+            setSelectedDate,
+            currentDate,
+            setCurrentDate
         }}>
             {children}
         </CalendarContext.Provider>
