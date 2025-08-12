@@ -3,6 +3,7 @@ export {
     getCalendarsTool,
     getEventsTool,
     createEventTool,
+    createEventsTool,
     searchEventsTool,
     getFreeBusyTool,
 } from './calendarTools';
@@ -29,6 +30,7 @@ import {
     createEventTool,
     searchEventsTool,
     getFreeBusyTool,
+    createEventsTool,
 } from './calendarTools';
 
 import {
@@ -50,6 +52,7 @@ export const allTools = [
     getCalendarsTool,
     getEventsTool,
     createEventTool,
+    createEventsTool,
     searchEventsTool,
     getFreeBusyTool,
 

@@ -254,11 +254,6 @@ const ChatAssistant = () => {
                                         setAgentMessages(reconstructedAgentMessages);
                                     }
                                     else if (parsed.type === 'tool_start') {
-                                        if (assistantContent) {
-                                            setMessages(prev => [...prev, new AIMessage(assistantContent)]);
-                                            messages.push(new AIMessage(assistantContent));
-                                            assistantContent = '';
-                                        }
                                         setMessages(prev => [...prev, new ToolMessage(parsed.content, parsed.tool_call_id, parsed.toolName)]);
                                         setToolStates(prev => ({
                                             ...prev,
