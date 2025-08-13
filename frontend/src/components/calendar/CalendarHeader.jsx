@@ -13,13 +13,14 @@ const CalendarHeader = ({
     navigateMonth,
     navigateDay,
     handleBackToMonth,
+    onScheduleGenerated,
     children
 }) => {
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
-    console.log(children)
+
     if (view === 'day' && selectedDate) {
         return (
             <div className="flex flex-row items-center justify-between">
@@ -43,7 +44,10 @@ const CalendarHeader = ({
                     </Button>
                 </div>
                 {children}
-                <ScheduleDayButton />
+                <ScheduleDayButton
+                    selectedDate={selectedDate}
+                    onScheduleGenerated={onScheduleGenerated}
+                />
             </div>
         );
     }
@@ -62,7 +66,10 @@ const CalendarHeader = ({
                 </Button>
             </div>
             {children}
-            <ScheduleDayButton />
+            <ScheduleDayButton
+                selectedDate={selectedDate}
+                onScheduleGenerated={onScheduleGenerated}
+            />
         </div>
     );
 };

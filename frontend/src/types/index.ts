@@ -55,6 +55,17 @@ export interface Event {
     created?: string;
     sequence?: number;
     updated?: string;
+    // Nuevas propiedades para eventos propuestos
+    isProposed?: boolean;
+    taskId?: string;
+    isDragging?: boolean;
+    // Propiedades adicionales para compatibilidad con EventItem
+    title?: string; // Alias para summary
+    date?: Date; // Fecha de inicio como objeto Date
+    endDate?: Date; // Fecha de fin como objeto Date
+    duration?: number; // Duración en minutos
+    isAllDayEvent?: boolean; // Indica si es un evento de todo el día
+    isGoogleEvent?: boolean; // Indica si viene de Google Calendar
 }
 
 export type EventDateTime =
@@ -155,6 +166,17 @@ export interface CalendarContextType {
     setSelectedDate: (date: Date | null) => void;
     currentDate: Date;
     setCurrentDate: (date: Date) => void;
+    // Nuevas funciones optimizadas
+    eventsCache: { [key: string]: Event[] };
+    loadedRange: { start: Date | null, end: Date | null };
+    isLoadingEvents: boolean;
+    localEvents: Event[];
+    setLocalEvents: (events: Event[]) => void;
+    loadEventsForRange: (startDate: Date, endDate: Date) => Promise<{ [key: string]: Event[] }>;
+    getEventsForDate: (date: Date) => Event[];
+    needsEventLoading: (date: Date) => boolean;
+    getOptimalRange: (centerDate?: Date) => { start: Date, end: Date };
+    parseGoogleEvent: (googleEvent: Event) => Event | null;
 }
 
 // Tipos para el contexto del chat
@@ -162,6 +184,51 @@ export interface ChatCalendarContext {
     calendars: Calendar[];
     tasks: Task[];
     events: Event[];
+}
+
+// Tipos para la programación del día
+export interface ScheduleEvent {
+    id: string;
+    title: string;
+    description?: string;
+    startDateTime: string;
+    endDateTime: string;
+    location?: string;
+    isProposed: boolean;
+    taskId?: string;
+}
+
+export interface ScheduleDayRequest {
+    date: string;
+    preferences?: {
+        workingHours?: {
+            start: string;
+            end: string;
+        };
+        breakDuration?: number;
+        taskPriority?: 'urgent' | 'important' | 'normal';
+    };
+}
+
+export interface ScheduleDayResponse {
+    success: boolean;
+    date: string;
+    proposedEvents: ScheduleEvent[];
+    existingEvents: ScheduleEvent[];
+    summary: {
+        totalTasks: number;
+        scheduledTasks: number;
+        totalHours: number;
+        freeHours: number;
+    };
+    recommendations?: string[];
+}
+
+export interface ScheduleSummary {
+    totalTasks: number;
+    scheduledTasks: number;
+    totalHours: number;
+    freeHours: number;
 }
 
 // Tipos para las respuestas de la API de Google
