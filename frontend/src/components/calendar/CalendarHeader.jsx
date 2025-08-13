@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ScheduleDayButton from './ScheduleDayButton';
 
 const CalendarHeader = ({
     view,
@@ -18,7 +19,7 @@ const CalendarHeader = ({
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
-
+    console.log(children)
     if (view === 'day' && selectedDate) {
         return (
             <div className="flex flex-row items-center justify-between">
@@ -42,6 +43,7 @@ const CalendarHeader = ({
                     </Button>
                 </div>
                 {children}
+                <ScheduleDayButton />
             </div>
         );
     }
@@ -60,6 +62,7 @@ const CalendarHeader = ({
                 </Button>
             </div>
             {children}
+            <ScheduleDayButton />
         </div>
     );
 };

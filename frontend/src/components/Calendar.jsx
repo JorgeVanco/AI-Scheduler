@@ -9,7 +9,6 @@ import {
     DayView,
     MonthView,
     EventForm,
-    EventLegend
 } from './calendar';
 
 const Calendar = () => {
