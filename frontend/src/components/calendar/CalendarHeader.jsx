@@ -13,7 +13,6 @@ const CalendarHeader = ({
     navigateMonth,
     navigateDay,
     handleBackToMonth,
-    onScheduleGenerated,
     children
 }) => {
     const monthNames = [
@@ -46,7 +45,6 @@ const CalendarHeader = ({
                 {children}
                 <ScheduleDayButton
                     selectedDate={selectedDate}
-                    onScheduleGenerated={onScheduleGenerated}
                 />
             </div>
         );
@@ -68,7 +66,6 @@ const CalendarHeader = ({
             {children}
             <ScheduleDayButton
                 selectedDate={selectedDate}
-                onScheduleGenerated={onScheduleGenerated}
             />
         </div>
     );

@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { useCalendarLogic } from '@/hooks/useCalendarLogic';
 import { useCalendarContext } from '@/context/calendarContext';
-import { useScheduleDay } from '@/hooks/useScheduleDay';
+import { useScheduleContext } from '@/context/scheduleContext';
 import { toast } from 'sonner';
 import {
     CalendarHeader,
@@ -12,7 +12,6 @@ import {
     MonthView,
     EventForm,
 } from './calendar';
-import ScheduleSummaryPanel from './calendar/ScheduleSummaryPanel';
 
 const Calendar = () => {
     const { view, selectedDate } = useCalendarContext();
@@ -47,18 +46,12 @@ const Calendar = () => {
         proposedEvents,
         scheduleSummary,
         isScheduleMode,
-        addProposedEvents,
         updateProposedEvent,
         removeProposedEvent,
         confirmSchedule,
         cancelSchedule,
         isConfirming
-    } = useScheduleDay();
-
-    const handleScheduleGenerated = (events, summary) => {
-        addProposedEvents(events, summary);
-        toast.success('¡Horario generado! Revisa y ajusta según necesites.');
-    };
+    } = useScheduleContext();
 
     const handleConfirmSchedule = async () => {
         const success = await confirmSchedule();
@@ -96,7 +89,6 @@ const Calendar = () => {
                         navigateMonth={navigateMonth}
                         navigateDay={navigateDay}
                         handleBackToMonth={handleBackToMonth}
-                        onScheduleGenerated={handleScheduleGenerated}
                     >
                         <EventForm
                             showEventForm={showEventForm}
@@ -107,43 +99,28 @@ const Calendar = () => {
                     </CalendarHeader>
                 </CardHeader>
 
-                <div className="flex-1 overflow-hidden flex flex-col">
-                    {/* Panel de resumen de programación */}
-                    {isScheduleMode && scheduleSummary && (
-                        <div className="px-4 py-2">
-                            <ScheduleSummaryPanel
-                                summary={scheduleSummary}
-                                onConfirm={handleConfirmSchedule}
-                                onCancel={handleCancelSchedule}
-                                isConfirming={isConfirming}
-                                proposedEventsCount={proposedEvents.length}
-                            />
-                        </div>
-                    )}
-
-                    <div className="flex-1 overflow-hidden">
-                        <DayView
-                            selectedDate={selectedDate}
-                            dayEvents={allDayEvents}
-                            isSelectedDateToday={isSelectedDateToday}
-                            currentTime={currentTime}
-                            formatTime={formatTime}
-                            generateHours={generateHours}
-                            getPositionFromTime={getPositionFromTime}
-                            getCurrentTimePosition={getCurrentTimePosition}
-                            showEventForm={showEventForm}
-                            setShowEventForm={setShowEventForm}
-                            newEventTitle={newEventTitle}
-                            setNewEventTitle={setNewEventTitle}
-                            createEvent={createEvent}
-                            handleDragOver={handleDragOver}
-                            handleDrop={handleDrop}
-                            handleDragStart={handleDragStart}
-                            deleteEvent={isScheduleMode ? handleDeleteProposedEvent : deleteEvent}
-                            updateProposedEvent={updateProposedEvent}
-                            isScheduleMode={isScheduleMode}
-                        />
-                    </div>
+                <div className="flex-1 overflow-hidden">
+                    <DayView
+                        selectedDate={selectedDate}
+                        dayEvents={allDayEvents}
+                        isSelectedDateToday={isSelectedDateToday}
+                        currentTime={currentTime}
+                        formatTime={formatTime}
+                        generateHours={generateHours}
+                        getPositionFromTime={getPositionFromTime}
+                        getCurrentTimePosition={getCurrentTimePosition}
+                        showEventForm={showEventForm}
+                        setShowEventForm={setShowEventForm}
+                        newEventTitle={newEventTitle}
+                        setNewEventTitle={setNewEventTitle}
+                        createEvent={createEvent}
+                        handleDragOver={handleDragOver}
+                        handleDrop={handleDrop}
+                        handleDragStart={handleDragStart}
+                        deleteEvent={isScheduleMode ? handleDeleteProposedEvent : deleteEvent}
+                        updateProposedEvent={updateProposedEvent}
+                        isScheduleMode={isScheduleMode}
+                    />
                 </div>
             </Card>
         );

@@ -6,10 +6,12 @@ import { useSession } from 'next-auth/react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCalendarContext } from '@/context/calendarContext';
+import { useScheduleContext } from '@/context/scheduleContext';
 
-const ScheduleDayButton = ({ selectedDate, onScheduleGenerated }) => {
+const ScheduleDayButton = ({ selectedDate }) => {
     const { data: session } = useSession();
     const { tasks, calendars, getEventsForDate } = useCalendarContext();
+    const { addProposedEvents } = useScheduleContext();
     const [isLoading, setIsLoading] = useState(false);
 
     const handleScheduleDay = async () => {
@@ -62,7 +64,7 @@ const ScheduleDayButton = ({ selectedDate, onScheduleGenerated }) => {
 
             if (result.success) {
                 toast.success(`¡Horario generado! ${result.summary.scheduledTasks} tareas programadas`);
-                onScheduleGenerated(result.proposedEvents, result.summary);
+                addProposedEvents(result.proposedEvents, result.summary);
 
                 // Mostrar recomendaciones si las hay
                 if (result.recommendations && result.recommendations.length > 0) {

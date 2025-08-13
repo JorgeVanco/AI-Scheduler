@@ -19,7 +19,9 @@ const DayView = ({
     handleDragOver,
     handleDrop,
     handleDragStart,
-    deleteEvent
+    deleteEvent,
+    updateProposedEvent,
+    isScheduleMode
 }) => {
     // Separate all-day events from timed events
     const allDayEvents = dayEvents.filter(event => event.isAllDayEvent && event.date.getDate() === selectedDate.getDate());
@@ -44,6 +46,8 @@ const DayView = ({
                                     handleDragStart={handleDragStart}
                                     deleteEvent={deleteEvent}
                                     formatTime={formatTime}
+                                    updateProposedEvent={updateProposedEvent}
+                                    isScheduleMode={isScheduleMode}
                                     style={{
                                         position: 'relative',
                                         height: '20px',
@@ -92,6 +96,8 @@ const DayView = ({
                                 handleDragStart={handleDragStart}
                                 deleteEvent={deleteEvent}
                                 formatTime={formatTime}
+                                updateProposedEvent={updateProposedEvent}
+                                isScheduleMode={isScheduleMode}
                             />
                         ))}
                     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCalendarContext } from '@/context/calendarContext';
+import { useScheduleContext } from '@/context/scheduleContext';
 
 export const useCalendarLogic = () => {
     const [showEventForm, setShowEventForm] = useState(false);
@@ -27,6 +28,8 @@ export const useCalendarLogic = () => {
         getOptimalRange,
         parseGoogleEvent
     } = useCalendarContext();
+
+    const { updateProposedEvent } = useScheduleContext();
 
     // Get date key for indexing (YYYY-MM-DD format) - utility function
     const getDateKey = (date) => {
@@ -192,22 +195,40 @@ export const useCalendarLogic = () => {
 
     const handleDrop = (e) => {
         e.preventDefault();
-        if (!draggedEvent || draggedEvent.isGoogleEvent) return;
+        if (!draggedEvent) return;
+
+        // Skip Google events that are not proposed
+        if (draggedEvent.isGoogleEvent && !draggedEvent.isProposed) return;
 
         const rect = e.currentTarget.getBoundingClientRect();
         const y = e.clientY - rect.top;
         const { hour, minute } = getTimeFromPosition(y, rect.height);
 
-        const updatedEvents = localEvents.map(event => {
-            if (event.id === draggedEvent.id) {
-                const newDate = new Date(selectedDate);
-                newDate.setHours(hour, minute, 0, 0);
-                return { ...event, date: newDate };
-            }
-            return event;
-        });
+        const newDate = new Date(selectedDate);
+        newDate.setHours(hour, minute, 0, 0);
 
-        setLocalEvents(updatedEvents);
+        if (draggedEvent.isProposed && updateProposedEvent) {
+            // Handle proposed events
+            const duration = draggedEvent.duration || 60;
+            const newEndDate = new Date(newDate.getTime() + duration * 60 * 1000);
+            
+            updateProposedEvent(draggedEvent.id, {
+                date: newDate,
+                endDate: newEndDate,
+                start: { dateTime: newDate.toISOString() },
+                end: { dateTime: newEndDate.toISOString() }
+            });
+        } else {
+            // Handle local events
+            const updatedEvents = localEvents.map(event => {
+                if (event.id === draggedEvent.id) {
+                    return { ...event, date: newDate };
+                }
+                return event;
+            });
+            setLocalEvents(updatedEvents);
+        }
+
         setDraggedEvent(null);
     };
 

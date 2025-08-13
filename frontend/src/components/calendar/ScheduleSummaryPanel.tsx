@@ -13,6 +13,7 @@ interface ScheduleSummaryPanelProps {
     onCancel: () => void;
     isConfirming: boolean;
     proposedEventsCount: number;
+    isCompact?: boolean;
 }
 
 const ScheduleSummaryPanel = ({
@@ -20,35 +21,40 @@ const ScheduleSummaryPanel = ({
     onConfirm,
     onCancel,
     isConfirming,
-    proposedEventsCount
+    proposedEventsCount,
+    isCompact = false
 }: ScheduleSummaryPanelProps) => {
     return (
-        <Card className="mb-4 border-l-4 border-l-blue-500 bg-blue-50/50">
-            <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                    <Sparkles className="h-5 w-5 text-blue-600" />
+        <Card className={`border-l-4 border-l-blue-500 bg-blue-50/50 ${isCompact ? 'mb-2' : 'mb-4'}`}>
+            <CardHeader className={isCompact ? "pb-2" : "pb-3"}>
+                <CardTitle className={`flex items-center gap-2 ${isCompact ? 'text-base' : 'text-lg'}`}>
+                    <Sparkles className={`${isCompact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600`} />
                     Propuesta de Horario
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 {/* Estadísticas */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className={`grid ${isCompact ? 'grid-cols-2 gap-2' : 'grid-cols-2 md:grid-cols-4 gap-3'}`}>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{proposedEventsCount}</div>
+                        <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold text-blue-600`}>{proposedEventsCount}</div>
                         <div className="text-xs text-gray-600">Tareas programadas</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{summary.totalHours}h</div>
+                        <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold text-green-600`}>{summary.totalHours}h</div>
                         <div className="text-xs text-gray-600">Tiempo ocupado</div>
                     </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">{summary.freeHours}h</div>
-                        <div className="text-xs text-gray-600">Tiempo libre</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{summary.totalTasks}</div>
-                        <div className="text-xs text-gray-600">Tareas totales</div>
-                    </div>
+                    {!isCompact && (
+                        <>
+                            <div className="text-center">
+                                <div className="text-2xl font-bold text-orange-600">{summary.freeHours}h</div>
+                                <div className="text-xs text-gray-600">Tiempo libre</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-2xl font-bold text-purple-600">{summary.totalTasks}</div>
+                                <div className="text-xs text-gray-600">Tareas totales</div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Estado */}
