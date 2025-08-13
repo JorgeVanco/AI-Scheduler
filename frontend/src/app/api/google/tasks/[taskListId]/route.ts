@@ -7,14 +7,21 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ taskListId: string }> }
 ) {
+    // Intentar obtener el token de acceso desde headers o sesión
+    const accessTokenFromHeader = req.headers.get('x-access-token');
     const session = await getServerSession(authOptions);
 
-    if (!session?.accessToken) {
+    console.log('Session:', session);
+    console.log('Access Token from Header:', accessTokenFromHeader ? 'Present' : 'Not present');
+
+    const accessToken = accessTokenFromHeader || session?.accessToken;
+
+    if (!accessToken) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: session.accessToken });
+    auth.setCredentials({ access_token: accessToken });
 
     const tasks = google.tasks({ version: 'v1', auth });
 
@@ -34,14 +41,18 @@ export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ taskListId: string }> }
 ) {
+    // Intentar obtener el token de acceso desde headers o sesión
+    const accessTokenFromHeader = req.headers.get('x-access-token');
     const session = await getServerSession(authOptions);
 
-    if (!session?.accessToken) {
+    const accessToken = accessTokenFromHeader || session?.accessToken;
+
+    if (!accessToken) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: session.accessToken });
+    auth.setCredentials({ access_token: accessToken });
 
     const tasks = google.tasks({ version: 'v1', auth });
 

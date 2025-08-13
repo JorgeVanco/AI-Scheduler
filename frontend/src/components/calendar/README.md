@@ -50,7 +50,7 @@ El componente Calendar ha sido refactorizado en varios componentes más pequeño
 - Componente controlado que recibe props para estado y funciones
 - Interfaz simple y clara para crear eventos
 
-#### 9. **EventLegend.jsx**
+#### 9. **ScheduleDayButton.jsx**
 - Leyenda que muestra los tipos de eventos (Google vs Local)
 - Componente visual independiente y reutilizable
 
@@ -65,7 +65,7 @@ frontend/src/components/
 │   ├── DayView.jsx
 │   ├── EventForm.jsx
 │   ├── EventItem.jsx
-│   ├── EventLegend.jsx
+│   ├── ScheduleDayButton.jsx
 │   ├── MonthView.jsx
 │   └── Timeline.jsx
 └── ...

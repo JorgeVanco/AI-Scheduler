@@ -198,6 +198,103 @@ export const searchEventsTool = tool(async ({ query, calendarId, maxResults }, c
     }),
 });
 
+// Tool to create multiple events at once
+export const createEventsTool = tool(async ({ events }, config) => {
+    try {
+        const accessToken = config?.configurable?.accessToken || config?.configurable?.userID;
+        if (!accessToken) {
+            throw new Error("Access token not provided");
+        }
+
+        const results = [];
+        const baseUrl = getBaseUrl();
+
+        for (const eventData of events) {
+            try {
+                const { calendarId = 'primary', title, description, startDateTime, location, attendees, timezone } = eventData;
+
+                let { endDateTime } = eventData;
+                if (!endDateTime) {
+                    endDateTime = new Date(new Date(startDateTime).getTime() + 60 * 60 * 1000).toISOString(); // Default to 1 hour after start time
+                }
+
+                const finalAttendees = attendees || [];
+                const finalTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone; // Use user's local timezone if not specified
+
+                const event = {
+                    summary: title,
+                    description: description,
+                    location: location,
+                    start: {
+                        dateTime: startDateTime,
+                        timeZone: finalTimezone,
+                    },
+                    end: {
+                        dateTime: endDateTime,
+                        timeZone: finalTimezone,
+                    },
+                    attendees: finalAttendees?.map((email: string) => ({ email })) || [],
+                };
+
+                const response = await fetch(`${baseUrl}/api/agent/events`, {
+                    method: 'POST',
+                    headers: {
+                        'x-access-token': accessToken,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        calendarId: calendarId || 'primary',
+                        event: event,
+                    }),
+                });
+
+                if (!response.ok) {
+                    results.push({
+                        success: false,
+                        title: title,
+                        error: `Failed to create event: ${response.statusText}`
+                    });
+                } else {
+                    const data = await response.json();
+                    results.push({
+                        success: true,
+                        title: title,
+                        data: data
+                    });
+                }
+            } catch (eventError) {
+                results.push({
+                    success: false,
+                    title: eventData.title || 'Unknown event',
+                    error: `Error creating event: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`
+                });
+            }
+        }
+
+        return JSON.stringify(results, null, 2);
+    } catch (error) {
+        return `Error creating events: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
+}, {
+    name: "create_events",
+    description: "Create multiple calendar events at once. Each event must have title, startDateTime. Always use EXACT calendar IDs from get_calendars - never modify them.",
+    schema: z.object({
+        events: z.array(z.object({
+            calendarId: z.string().optional().describe("EXACT Calendar ID from get_calendars where to create the event - DO NOT MODIFY. Defaults to 'primary' if not specified by user"),
+            title: z.string().describe("Event title/summary"),
+            description: z.string().optional().describe("Event description"),
+            startDateTime: z.string().describe("Start date and time in ISO format (e.g., '2023-12-25T10:00:00')"),
+            endDateTime: z.string().optional().describe("End date and time in ISO format (e.g., '2023-12-25T11:00:00'). If not set, it defaults to 1 hour after startDateTime."),
+            location: z.string().optional().describe("Event location"),
+            attendees: z.union([
+                z.array(z.string()),
+                z.literal("")
+            ]).optional().describe("Array of attendee email addresses"),
+            timezone: z.string().optional().describe("Timezone (e.g., 'America/New_York', 'Europe/Madrid'). Defaults to user's local timezone if not specified"),
+        })).describe("Array of events to create")
+    })
+});
+
 // Tool to check free/busy time for calendars
 export const getFreeBusyTool = tool(async ({ calendars = "primary", startDateTime, endDateTime }, config) => {
     try {

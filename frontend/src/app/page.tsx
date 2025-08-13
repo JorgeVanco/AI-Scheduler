@@ -2,6 +2,7 @@
 
 import Calendar from "@/components/Calendar";
 import ChatAssistant from "@/components/ChatAssistant";
+import ScheduleSummaryPanel from "@/components/calendar/ScheduleSummaryPanel";
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -21,11 +22,30 @@ import styles from "./styles.module.css";
 
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import { useCalendarContext } from "@/context/calendarContext";
+import { useScheduleContext } from "@/context/scheduleContext";
 
 export default function Home() {
 
   const { view, selectedDate } = useCalendarContext();
   const { currentDate } = useCalendarLogic();
+  const {
+    scheduleSummary,
+    isScheduleMode,
+    confirmSchedule,
+    cancelSchedule,
+    isConfirming,
+    proposedEvents
+  } = useScheduleContext();
+
+  const handleConfirmSchedule = async () => {
+    const success = await confirmSchedule();
+    // Toast notifications will be handled in Calendar component
+  };
+
+  const handleCancelSchedule = () => {
+    cancelSchedule();
+    // Toast notifications will be handled in Calendar component
+  };
 
   return (
     <SidebarProvider>
@@ -58,7 +78,19 @@ export default function Home() {
             <Calendar />
           </section>
           <aside className="h-full overflow-hidden">
-            <ChatAssistant />
+            {/* Mostrar panel de resumen si estamos en modo programación en vista de día */}
+            {isScheduleMode && scheduleSummary && view === 'day' ? (
+              <ScheduleSummaryPanel
+                summary={scheduleSummary}
+                onConfirm={handleConfirmSchedule}
+                onCancel={handleCancelSchedule}
+                isConfirming={isConfirming}
+                proposedEventsCount={proposedEvents.length}
+                isCompact={true}
+              />
+            ) : (
+              <ChatAssistant />
+            )}
           </aside>
         </main>
       </SidebarInset>

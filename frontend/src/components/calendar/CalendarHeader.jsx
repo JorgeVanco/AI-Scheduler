@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ScheduleDayButton from './ScheduleDayButton';
 
 const CalendarHeader = ({
     view,
@@ -42,6 +43,9 @@ const CalendarHeader = ({
                     </Button>
                 </div>
                 {children}
+                <ScheduleDayButton
+                    selectedDate={selectedDate}
+                />
             </div>
         );
     }
@@ -60,6 +64,9 @@ const CalendarHeader = ({
                 </Button>
             </div>
             {children}
+            <ScheduleDayButton
+                selectedDate={selectedDate}
+            />
         </div>
     );
 };
