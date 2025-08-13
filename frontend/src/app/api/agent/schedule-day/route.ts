@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { CallbackHandler } from "langfuse-langchain";
+import { Calendar, Event, Task } from '@/types';
 
 // Permitir respuestas hasta 30 segundos
 export const maxDuration = 30;
@@ -21,9 +22,9 @@ interface ScheduleEvent {
 
 interface ScheduleDayRequest {
     date: string; // ISO date string
-    existingEvents?: any[]; // Eventos ya existentes del día
-    availableTasks?: any[]; // Tareas disponibles para programar
-    calendars?: any[]; // Información de calendarios
+    existingEvents?: Event[]; // Eventos ya existentes del día
+    availableTasks?: Task[]; // Tareas disponibles para programar
+    calendars?: Calendar[]; // Información de calendarios
     preferences?: {
         workingHours?: {
             start: string; // "09:00"
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
         endOfDay.setHours(23, 59, 59, 999);
 
         let eventsData;
-        let allTasks: any[];
+        let allTasks: Task[];
 
         // Si tenemos datos del frontend, usarlos; si no, obtenerlos de la API
         if (existingEvents && availableTasks) {
@@ -186,13 +187,13 @@ IMPORTANTE: Asegúrate de cerrar correctamente el JSON con todas las llaves y co
         const userPrompt = `FECHA OBJETIVO: ${targetDate.toLocaleDateString('es-ES')}
 
 EVENTOS EXISTENTES (NO MODIFICAR):
-${eventsData.items?.map((event: any) =>
+${eventsData.items?.map((event: Event) =>
             `- ${event.summary} (${event.start.dateTime || event.start.date} - ${event.end.dateTime || event.end.date})`
         ).join('\n') || 'No hay eventos existentes'}
 
 TAREAS DISPONIBLES:
-${allTasks?.filter((task: any) => task.status === 'needsAction')
-                .map((task: any) =>
+${allTasks?.filter((task: Task) => task.status === 'needsAction')
+                .map((task: Task) =>
                     `- ${task.title}${task.notes ? ` (${task.notes})` : ''}${task.due ? ` - Vence: ${task.due}` : ''}`
                 ).join('\n') || 'No hay tareas pendientes'}
 
@@ -250,7 +251,7 @@ Genera un horario optimizado que incluya las tareas más importantes en los espa
             }
 
             // Asegurarse de que cada evento propuesto tenga un ID único
-            aiResult.proposedEvents = aiResult.proposedEvents.map((event: any, index: number) => ({
+            aiResult.proposedEvents = aiResult.proposedEvents.map((event: ScheduleEvent, index: number) => ({
                 ...event,
                 id: event.id || `proposed-${Date.now()}-${index}`,
                 isProposed: true
@@ -262,9 +263,9 @@ Genera un horario optimizado que incluya las tareas más importantes en los espa
 
             // Fallback mejorado: crear eventos básicos de las tareas
             const fallbackEvents = allTasks
-                ?.filter((task: any) => task.status === 'needsAction')
+                ?.filter((task: Task) => task.status === 'needsAction')
                 .slice(0, 5) // Limitar a 5 tareas
-                .map((task: any, index: number) => {
+                .map((task: Task, index: number) => {
                     const startTime = new Date(targetDate);
                     startTime.setHours(9 + index, 0, 0, 0); // Programar cada hora a partir de las 9:00
                     const endTime = new Date(startTime);
@@ -292,7 +293,7 @@ Genera un horario optimizado que incluya las tareas más importantes en los espa
         }
 
         // Convertir eventos existentes al formato esperado
-        const processedExistingEvents: ScheduleEvent[] = eventsData.items?.map((event: any) => ({
+        const processedExistingEvents: ScheduleEvent[] = eventsData.items?.map((event: Event) => ({
             id: event.id,
             title: event.summary,
             description: event.description,
@@ -303,7 +304,7 @@ Genera un horario optimizado que incluya las tareas más importantes en los espa
         })) || [];
 
         // Calcular resumen
-        const totalTasks = allTasks?.filter((task: any) => task.status === 'needsAction').length || 0;
+        const totalTasks = allTasks?.filter((task: Task) => task.status === 'needsAction').length || 0;
         const scheduledTasks = aiResult.proposedEvents?.length || 0;
 
         const allEvents = [...processedExistingEvents, ...(aiResult.proposedEvents || [])];
