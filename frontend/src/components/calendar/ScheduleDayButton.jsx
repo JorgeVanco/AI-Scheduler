@@ -46,8 +46,8 @@ const ScheduleDayButton = ({ selectedDate }) => {
                     calendars: calendars,
                     preferences: {
                         workingHours: {
-                            start: '09:00',
-                            end: '18:00'
+                            start: '07:00',
+                            end: '22:30'
                         },
                         breakDuration: 15,
                         taskPriority: 'important'
@@ -65,7 +65,6 @@ const ScheduleDayButton = ({ selectedDate }) => {
             if (result.success) {
                 toast.success(`¡Horario generado! ${result.summary.scheduledTasks} tareas programadas`);
                 addProposedEvents(result.proposedEvents, result.summary);
-
                 // Mostrar recomendaciones si las hay
                 if (result.recommendations && result.recommendations.length > 0) {
                     setTimeout(() => {

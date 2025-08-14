@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, Trash2 } from 'lucide-react';
 
 const EventItem = ({
     event,
@@ -236,13 +236,13 @@ const EventItem = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="max-h-4 max-w-4 h-[1em] w-[1em] p-0 hover:bg-red-100"
+                            className="max-h-4 max-w-4 h-[1em] w-[1em] p-0 hover:bg-red-100 z-30"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 deleteEvent(event.id);
                             }}
                         >
-                            <X className="h-3 w-3 text-red-600" />
+                            <Trash2 className="h-3 w-3 text-red-600 z-30" />
                         </Button>
                     )}
                 </div>
