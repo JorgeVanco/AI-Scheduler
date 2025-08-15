@@ -5,6 +5,7 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { useCalendarLogic } from '@/hooks/useCalendarLogic';
 import { useCalendarContext } from '@/context/calendarContext';
 import { useScheduleContext } from '@/context/scheduleContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import {
     CalendarHeader,
@@ -15,6 +16,7 @@ import {
 
 const Calendar = () => {
     const { view, selectedDate } = useCalendarContext();
+    const isMobile = useIsMobile();
 
     const {
         currentDate,
@@ -80,7 +82,7 @@ const Calendar = () => {
         const allDayEvents = [...dayEvents, ...proposedEvents];
 
         return (
-            <Card className="w-full max-w-4xl mx-auto h-full flex flex-col">
+            <Card className={`w-full ${isMobile ? 'gap-1 pb-1' : 'max-w-4xl'} mx-auto h-full flex flex-col`}>
                 <CardHeader className="flex-shrink-0">
                     <CalendarHeader
                         view={view}
@@ -89,12 +91,14 @@ const Calendar = () => {
                         navigateMonth={navigateMonth}
                         navigateDay={navigateDay}
                         handleBackToMonth={handleBackToMonth}
+                        isMobile={isMobile}
                     >
                         <EventForm
                             showEventForm={showEventForm}
                             setShowEventForm={setShowEventForm}
                             newEventTitle={newEventTitle}
                             setNewEventTitle={setNewEventTitle}
+                            isMobile={isMobile}
                         />
                     </CalendarHeader>
                 </CardHeader>
@@ -120,6 +124,7 @@ const Calendar = () => {
                         deleteEvent={isScheduleMode ? handleDeleteProposedEvent : deleteEvent}
                         updateProposedEvent={updateProposedEvent}
                         isScheduleMode={isScheduleMode}
+                        isMobile={isMobile}
                     />
                 </div>
             </Card>
@@ -129,7 +134,7 @@ const Calendar = () => {
     const calendarDays = generateCalendarDays();
 
     return (
-        <Card className="w-full max-w-4xl mx-auto h-full flex flex-col">
+        <Card className={`w-full ${isMobile ? 'gap-1 pb-1' : 'max-w-4xl'} mx-auto h-full flex flex-col`}>
             <CardHeader className="flex-shrink-0">
                 <CalendarHeader
                     view={view}
@@ -138,6 +143,7 @@ const Calendar = () => {
                     navigateMonth={navigateMonth}
                     navigateDay={navigateDay}
                     handleBackToMonth={handleBackToMonth}
+                    isMobile={isMobile}
                 >
                 </CalendarHeader>
             </CardHeader>
@@ -149,6 +155,7 @@ const Calendar = () => {
                     isToday={isToday}
                     isSameMonth={isSameMonth}
                     handleDateClick={handleDateClick}
+                    isMobile={isMobile}
                 />
             </div>
         </Card>
