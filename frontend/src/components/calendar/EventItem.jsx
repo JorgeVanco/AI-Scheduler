@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, Trash2 } from 'lucide-react';
 
 const EventItem = ({
     event,
@@ -14,7 +14,8 @@ const EventItem = ({
     formatTime,
     updateProposedEvent,
     isScheduleMode = false,
-    style = {}
+    style = {},
+    isMobile = false
 }) => {
     let eventTop;
     let duration;
@@ -139,8 +140,8 @@ const EventItem = ({
             style={defaultStyle}
             className={`
                 ${event.isAllDayEvent
-                    ? 'flex items-center px-2 py-1 text-xs font-medium truncate'
-                    : 'absolute left-1 right-1 border rounded px-2 py-1 z-10 transition-colors'
+                    ? `flex items-center ${isMobile ? 'px-1 py-0.5 text-[10px]' : 'px-2 py-1 text-xs'} font-medium truncate`
+                    : `absolute left-1 right-1 border rounded ${isMobile ? 'px-1 py-0.5' : 'px-2 py-1'} z-10 transition-colors`
                 }
                 ${isProposed
                     ? 'bg-blue-50 hover:bg-blue-100 cursor-move border-dashed group'
@@ -181,49 +182,49 @@ const EventItem = ({
                     ) : duration >= 60 ? (
                         // Standard layout for events 1 hour or longer
                         <>
-                            <div className={`font-medium text-sm truncate`}>
+                            <div className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
                                 {event.title}
                             </div>
-                            <div className={`text-xs`}>
+                            <div className={`${isMobile ? 'text-[10px]' : 'text-xs'}`}>
                                 {formatTime(eventDate.getHours(), eventDate.getMinutes())}
                                 {eventEndDate && ` - ${formatTime(eventEndDate.getHours(), eventEndDate.getMinutes())}`}
-                                {event.location && `, ${event.location}`}
+                                {event.location && !isMobile && `, ${event.location}`}
                             </div>
                         </>
                     ) : duration > 40 ? (
                         // Smaller text for events between 40-60 minutes
                         <>
-                            <div className={`font-medium text-xs truncate`}>
+                            <div className={`font-medium ${isMobile ? 'text-[10px]' : 'text-xs'} truncate`}>
                                 {event.title}
                             </div>
-                            <div className={`text-xs`} style={{ fontSize: '10px' }}>
+                            <div className={`${isMobile ? 'text-[8px]' : 'text-xs'}`} style={{ fontSize: isMobile ? '8px' : '10px' }}>
                                 {formatTime(eventDate.getHours(), eventDate.getMinutes())}
                                 {eventEndDate && ` - ${formatTime(eventEndDate.getHours(), eventEndDate.getMinutes())}`}
-                                {event.location && `, ${event.location}`}
+                                {event.location && !isMobile && `, ${event.location}`}
                             </div>
                         </>
                     ) : duration > 15 ? (
                         // Single line for very short events (30 minutes to 15 minutes)
-                        <div className={`text-xs truncate`}>
-                            <span className="font-medium">{event.title}</span>
+                        <div className={`${isMobile ? 'text-[10px]' : 'text-xs'} truncate`}>
+                            <span className="font-medium">{isMobile ? event.title.substring(0, 24) + (event.title.length > 24 ? '...' : '') : event.title}</span>
                             <span className="ml-1">
                                 {formatTime(eventDate.getHours(), eventDate.getMinutes())}
-                                {eventEndDate && ` - ${formatTime(eventEndDate.getHours(), eventEndDate.getMinutes())}`}
+                                {eventEndDate && !isMobile && ` - ${formatTime(eventEndDate.getHours(), eventEndDate.getMinutes())}`}
                             </span>
                         </div>
                     ) : (
                         // Single line for very short events (15 minutes or less)
-                        <div className={`text-[8px] truncate`}>
-                            <span className="font-small">{event.title}</span>
+                        <div className={`${isMobile ? 'text-[8px]' : 'text-[8px]'} truncate`}>
+                            <span className="font-small">{isMobile ? event.title.substring(0, 24) + (event.title.length > 24 ? '...' : '') : event.title}</span>
                             <span className="ml-1">
                                 {formatTime(eventDate.getHours(), eventDate.getMinutes())}
-                                {eventEndDate && ` - ${formatTime(eventEndDate.getHours(), eventEndDate.getMinutes())}`}
+                                {eventEndDate && !isMobile && ` - ${formatTime(eventEndDate.getHours(), eventEndDate.getMinutes())}`}
                             </span>
                         </div>
                     )}
                 </div>
                 <div className="flex items-center gap-1 ml-1">
-                    {isGoogleEvent && event.htmlLink && (
+                    {isGoogleEvent && event.htmlLink && !isMobile && (
                         <ExternalLink
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -236,13 +237,13 @@ const EventItem = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="max-h-4 max-w-4 h-[1em] w-[1em] p-0 hover:bg-red-100"
+                            className={`${isMobile ? 'max-h-3 max-w-3 h-[0.75em] w-[0.75em]' : 'max-h-4 max-w-4 h-[1em] w-[1em]'} p-0 hover:bg-red-100 z-30`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 deleteEvent(event.id);
                             }}
                         >
-                            <X className="h-3 w-3 text-red-600" />
+                            <Trash2 className={`${isMobile ? 'h-2 w-2' : 'h-3 w-3'} text-red-600 z-30`} />
                         </Button>
                     )}
                 </div>

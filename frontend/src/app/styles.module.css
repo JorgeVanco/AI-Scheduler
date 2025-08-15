@@ -9,3 +9,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Mobile tabs styling */
+@media (max-width: 767px) {
+  .mobileTabContent {
+    height: calc(100vh - 140px); /* Account for header and tabs */
+    overflow: auto;
+  }
+  
+  /* Ensure proper spacing for fixed bottom tabs */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Hide scrollbars on mobile for cleaner look */
+  .mobileTabContent::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .mobileTabContent {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

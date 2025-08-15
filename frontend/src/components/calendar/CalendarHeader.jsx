@@ -13,7 +13,8 @@ const CalendarHeader = ({
     navigateMonth,
     navigateDay,
     handleBackToMonth,
-    children
+    children,
+    isMobile
 }) => {
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -22,51 +23,55 @@ const CalendarHeader = ({
 
     if (view === 'day' && selectedDate) {
         return (
-            <div className="flex flex-row items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handleBackToMonth}>
-                        ← Month
+            <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-row'} items-center justify-between`}>
+                <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'}`}>
+                    <Button variant="outline" size={isMobile ? "xs" : "sm"} onClick={handleBackToMonth}>
+                        {isMobile ? '←' : '← Month'}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigateDay(-1)}>
-                        <ChevronLeft className="h-4 w-4" />
+                    <Button variant="outline" size={isMobile ? "xs" : "sm"} onClick={() => navigateDay(-1)}>
+                        <ChevronLeft className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                     </Button>
-                    <CardTitle>
-                        {selectedDate.toLocaleDateString('en-US', {
-                            weekday: 'long',
+                    <CardTitle className={isMobile ? 'text-sm' : ''}>
+                        {selectedDate.toLocaleDateString(isMobile ? 'es-ES' : 'en-US', {
+                            weekday: isMobile ? 'short' : 'long',
                             year: 'numeric',
-                            month: 'long',
+                            month: isMobile ? 'short' : 'long',
                             day: 'numeric'
                         })}
                     </CardTitle>
-                    <Button variant="outline" size="sm" onClick={() => navigateDay(1)}>
-                        <ChevronRight className="h-4 w-4" />
+                    <Button variant="outline" size={isMobile ? "xs" : "sm"} onClick={() => navigateDay(1)}>
+                        <ChevronRight className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                     </Button>
                 </div>
                 {children}
-                <ScheduleDayButton
-                    selectedDate={selectedDate}
-                />
+                {!isMobile && (
+                    <ScheduleDayButton
+                        selectedDate={selectedDate}
+                    />
+                )}
             </div>
         );
     }
 
     return (
-        <div className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
-                    <ChevronLeft className="h-4 w-4" />
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-row'} items-center justify-between`}>
+            <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'}`}>
+                <Button variant="outline" size={isMobile ? "xs" : "sm"} onClick={() => navigateMonth(-1)}>
+                    <ChevronLeft className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 </Button>
-                <CardTitle>
+                <CardTitle className={isMobile ? 'text-sm' : ''}>
                     {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
-                    <ChevronRight className="h-4 w-4" />
+                <Button variant="outline" size={isMobile ? "xs" : "sm"} onClick={() => navigateMonth(1)}>
+                    <ChevronRight className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 </Button>
             </div>
             {children}
-            <ScheduleDayButton
-                selectedDate={selectedDate}
-            />
+            {!isMobile && (
+                <ScheduleDayButton
+                    selectedDate={selectedDate}
+                />
+            )}
         </div>
     );
 };

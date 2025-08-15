@@ -65,9 +65,6 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
             // Add event to all dates it spans
             const current = new Date(startDate);
             while (current <= endDate) {
-                if (event.summary === "Dormir 🛏️💤") {
-                    console.log({ current, startDate, endDate })
-                }
                 const dateKey = getDateKey(current);
                 if (!indexed[dateKey]) {
                     indexed[dateKey] = [];
