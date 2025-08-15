@@ -82,8 +82,8 @@ const Calendar = () => {
         const allDayEvents = [...dayEvents, ...proposedEvents];
 
         return (
-            <Card className={`w-full ${isMobile ? 'gap-1 pb-1' : 'max-w-4xl'} mx-auto h-full flex flex-col`}>
-                <CardHeader className="flex-shrink-0">
+            <Card className={`w-full ${isMobile ? 'gap-1 pb-1 h-full' : 'gap-1 max-w-4xl'} mx-auto h-full flex flex-col py-4 ${isMobile ? 'px-2' : 'px-4'}`}>
+                <CardHeader className="flex-shrink-0 p-0">
                     <CalendarHeader
                         view={view}
                         currentDate={currentDate}
@@ -103,7 +103,7 @@ const Calendar = () => {
                     </CalendarHeader>
                 </CardHeader>
 
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden h-full p-0">
                     <DayView
                         selectedDate={selectedDate}
                         dayEvents={allDayEvents}
@@ -134,8 +134,8 @@ const Calendar = () => {
     const calendarDays = generateCalendarDays();
 
     return (
-        <Card className={`w-full ${isMobile ? 'gap-1 pb-1' : 'max-w-4xl'} mx-auto h-full flex flex-col`}>
-            <CardHeader className="flex-shrink-0">
+        <Card className={`w-full ${isMobile ? 'gap-1 pb-1 h-full' : 'gap-1 max-w-4xl'} mx-auto h-full flex flex-col py-4 ${isMobile ? 'px-2' : 'px-4'}`}>
+            <CardHeader className="flex-shrink-0 p-0">
                 <CalendarHeader
                     view={view}
                     currentDate={currentDate}
@@ -148,7 +148,7 @@ const Calendar = () => {
                 </CalendarHeader>
             </CardHeader>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden h-full p-0">
                 <MonthView
                     calendarDays={calendarDays}
                     getEventsForDate={getEventsForDate}

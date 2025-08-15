@@ -84,44 +84,45 @@ export default function Home() {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <main className={`flex-1 min-h-0 overflow-hidden ${isMobile ? 'pb-16' : 'p-4'}`}>
+        <main className={`flex-1 min-h-0 overflow-hidden ${isMobile ? '' : 'p-2'}`}>
           {isMobile ? (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-              < TabsContent value="calendar" className="flex-1 m-0 overflow-hidden p-1">
-                <Calendar />
-              </TabsContent>
-              <TabsContent value="chat" className="flex-1 m-0 overflow-hidden p-1">
-                {isScheduleMode && scheduleSummary && view === 'day' ? (
-                  <ScheduleSummaryPanel
-                    summary={scheduleSummary}
-                    onConfirm={handleConfirmSchedule}
-                    onCancel={handleCancelSchedule}
-                    isConfirming={isConfirming}
-                    proposedEventsCount={proposedEvents.length}
-                    isCompact={true}
-                  />
-                ) : (
-                  <ChatAssistant />
-                )}
-              </TabsContent>
+              <div className="flex flex-col h-full">
+                <TabsContent value="calendar" className="flex-1 m-0 overflow-hidden p-1">
+                  <Calendar />
+                </TabsContent>
+                <TabsContent value="chat" className="flex-1 m-0 overflow-hidden p-1">
+                  {isScheduleMode && scheduleSummary && view === 'day' ? (
+                    <ScheduleSummaryPanel
+                      summary={scheduleSummary}
+                      onConfirm={handleConfirmSchedule}
+                      onCancel={handleCancelSchedule}
+                      isConfirming={isConfirming}
+                      proposedEventsCount={proposedEvents.length}
+                      isCompact={true}
+                    />
+                  ) : (
+                    <ChatAssistant />
+                  )}
+                </TabsContent>
 
-
-              {/* Fixed bottom tabs for mobile */}
-              <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t px-2 py-2 safe-area-pb">
-                {session?.user ?
-                  <TabsList className="grid w-full grid-cols-2 h-14 bg-muted/50">
-                    <TabsTrigger value="calendar" className="flex flex-col items-center gap-1 h-full px-3 py-1 data-[state=active]:bg-background">
-                      <CalendarDays className="h-5 w-5" />
-                    </TabsTrigger>
-                    <TabsTrigger value="chat" className="flex flex-col items-center gap-1 h-full px-3 py-1 data-[state=active]:bg-background">
-                      <MessageSquare className="h-5 w-5" />
-                    </TabsTrigger>
-                  </TabsList> :
-                  <GoogleSignInButton />}
+                {/* Fixed bottom tabs for mobile */}
+                <div className="bg-background/95 backdrop-blur-sm border-t px-2 py-2 safe-area-pb">
+                  {session?.user ?
+                    <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+                      <TabsTrigger value="calendar" className="flex flex-col items-center gap-1 h-full px-3 py-1 data-[state=active]:bg-background">
+                        <CalendarDays className="h-5 w-5" />
+                      </TabsTrigger>
+                      <TabsTrigger value="chat" className="flex flex-col items-center gap-1 h-full px-3 py-1 data-[state=active]:bg-background">
+                        <MessageSquare className="h-5 w-5" />
+                      </TabsTrigger>
+                    </TabsList> :
+                    <GoogleSignInButton />}
+                </div>
               </div>
             </Tabs>
           ) : (
-            <div className={`${styles.calendarGrid} h-full p-4`}>
+            <div className={`${styles.calendarGrid} h-full`}>
               <section className="h-full overflow-hidden">
                 <Calendar />
               </section>
