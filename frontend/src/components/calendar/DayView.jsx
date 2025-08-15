@@ -4,6 +4,7 @@ import React from 'react';
 import { CardContent } from '@/components/ui/card';
 import Timeline from './Timeline';
 import EventItem from './EventItem';
+import { useScreenSize } from '@/hooks/use-screen-size';
 
 const DayView = ({
     selectedDate,
@@ -24,6 +25,8 @@ const DayView = ({
     isScheduleMode,
     isMobile
 }) => {
+    const { isSmallMobile, height } = useScreenSize();
+
     // Separate all-day events from timed events
     const allDayEvents = dayEvents.filter(event => event.isAllDayEvent && event.date.getDate() === selectedDate.getDate());
     const timedEvents = dayEvents.filter(event => !event.isAllDayEvent);
@@ -32,8 +35,22 @@ const DayView = ({
     const allDayEventsHeight = allDayEvents.length > 0 ?
         (allDayEvents.length * (isMobile ? 20 : 24)) + 16 : 0; // height per event + margin
 
-    // Calculate remaining height for timed events
-    const timedEventsHeight = `calc(100% - ${allDayEventsHeight}px)`;
+    // Calcular altura dinámica para la sección de eventos programados
+    const getTimedEventsContainerHeight = () => {
+        if (!isMobile) return '550px';
+
+        // Reservar espacio para header, tabs, etc.
+        const reservedSpace = isSmallMobile ? 250 : 200;
+        const availableHeight = height - reservedSpace - allDayEventsHeight;
+
+        return `${Math.max(300, availableHeight)}px`;
+    };
+
+    // Altura del timeline interno
+    const getTimelineHeight = () => {
+        if (!isMobile) return '1000px';
+        return isSmallMobile ? '1200px' : '1440px';
+    };
 
     return (
         <CardContent className={`${isMobile ? 'p-1' : ''} relative h-full flex flex-col`}>
@@ -75,10 +92,11 @@ const DayView = ({
             <div
                 className="relative border rounded-lg overflow-auto flex-1"
                 style={{
-                    minHeight: isMobile ? '600px' : '550px'
+                    height: getTimedEventsContainerHeight(),
+                    maxHeight: isMobile ? `calc(100vh - ${isSmallMobile ? '280px' : '220px'})` : 'none'
                 }}
             >
-                <div className="relative" style={{ height: isMobile ? '1000px' : '1000px' }}>
+                <div className="relative" style={{ height: getTimelineHeight() }}>
                     <Timeline
                         formatTime={formatTime}
                         generateHours={generateHours}

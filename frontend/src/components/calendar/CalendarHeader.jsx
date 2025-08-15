@@ -23,7 +23,7 @@ const CalendarHeader = ({
 
     if (view === 'day' && selectedDate) {
         return (
-            <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-row'} items-center justify-between`}>
+            <div className={`flex flex-row items-center justify-between p-0`}>
                 <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'}`}>
                     <Button variant="outline" size={isMobile ? "xs" : "sm"} onClick={handleBackToMonth}>
                         {isMobile ? '←' : '← Month'}
@@ -44,17 +44,15 @@ const CalendarHeader = ({
                     </Button>
                 </div>
                 {children}
-                {!isMobile && (
-                    <ScheduleDayButton
-                        selectedDate={selectedDate}
-                    />
-                )}
+                <ScheduleDayButton
+                    selectedDate={selectedDate}
+                />
             </div>
         );
     }
 
     return (
-        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-row'} items-center justify-between`}>
+        <div className={`flex flex-row items-center justify-between`}>
             <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'}`}>
                 <Button variant="outline" size={isMobile ? "xs" : "sm"} onClick={() => navigateMonth(-1)}>
                     <ChevronLeft className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
@@ -67,11 +65,9 @@ const CalendarHeader = ({
                 </Button>
             </div>
             {children}
-            {!isMobile && (
-                <ScheduleDayButton
-                    selectedDate={selectedDate}
-                />
-            )}
+            <ScheduleDayButton
+                selectedDate={selectedDate}
+            />
         </div>
     );
 };
