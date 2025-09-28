@@ -4,6 +4,7 @@ import { ToolNode } from "@langchain/langgraph/prebuilt";
 // import { ChatOllama } from "@langchain/ollama";
 import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
 import { allTools } from "./tools/index";
+import { DuckDuckGoSearch } from "@langchain/community/tools/duckduckgo_search";
 
 const StateAnnotation = Annotation.Root({
     messages: Annotation<BaseMessage[]>({
@@ -12,7 +13,7 @@ const StateAnnotation = Annotation.Root({
 });
 
 // Combine all tools: original search tool + new calendar/task/time tools
-const tools = [...allTools]; // [searchTool, ...allTools];
+const tools = [new DuckDuckGoSearch({ maxResults: 5 }), ...allTools]; // [searchTool, ...allTools];
 
 const toolNode = new ToolNode(tools);
 
@@ -69,6 +70,9 @@ TOOL USAGE STRATEGY:
 5. Use add_time to calculate future/past dates for scheduling
 
 AVAILABLE TOOLS:
+
+SEARCH TOOL:
+- duckduckgo_search: Search the web for current information (returns top 5 results)
 
 CALENDAR MANAGEMENT:
 - get_calendars: Retrieve all user's Google calendars with their IDs and names
