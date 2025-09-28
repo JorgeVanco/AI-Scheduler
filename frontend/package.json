@@ -34,6 +34,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "duck-duck-scrape": "^2.2.7",
     "googleapis": "^155.0.0",
     "langfuse": "^3.38.4",
     "langfuse-langchain": "^3.38.4",
