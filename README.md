@@ -7,6 +7,17 @@ It will then create a schedule that contains all the events and some of the task
 
 **Note:** This AI agent is an experimental tool and is not perfect. It may occasionally make mistakes in scheduling or fail to properly prioritize tasks. Always review the generated schedule and make adjustments as needed. The agent's effectiveness will improve with feedback and continued development.
 
+## Web page
+The latest version supports a web page.
+
+<img width="3072" height="1646" alt="image" src="https://github.com/user-attachments/assets/d656e74d-905a-4891-ad65-823d5da3077c" />
+
+
+```bash
+    cd frontend
+    npm run dev
+```
+
 ## Installation Steps
 
 1.  **Clone the Repository**
@@ -18,13 +29,15 @@ It will then create a schedule that contains all the events and some of the task
 
 2.  **Set Up Environment**
 
+    The following steps work for the code in the folder `backend`, so please execute `cd backend` first.
+
     ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
     pip install -r requirements.txt
     ```
 
-3.  **Prepare model to use**
+4.  **Prepare model to use**
 
     There are several ways to use free models as your schedulers.
     The first one is using `Ollama` to run you model locally.
@@ -72,7 +85,7 @@ It will then create a schedule that contains all the events and some of the task
     model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free")
     ```
 
-4.  **Configure Google API Credentials**
+5.  **Configure Google API Credentials**
 
     To allow your application to access Google Calendar and Google Tasks on your behalf, follow these steps to configure your Google API credentials:
 
@@ -108,7 +121,7 @@ It will then create a schedule that contains all the events and some of the task
        This is where your app will look for the file during authentication.
 
 
-5.  **Add CALENDAR_ID to environment variables**
+6.  **Add CALENDAR_ID to environment variables**
 
     -   Create a `.env` file in the project root directory
     -   You can get your calendar ID from the calendar configuration at Google Calendar.
@@ -119,7 +132,7 @@ It will then create a schedule that contains all the events and some of the task
     CALENDAR_ID=your-calendar-id
     ```
 
-6.  **Adding Your Personal Touch (Optional)**
+7.  **Adding Your Personal Touch (Optional)**
 
     You can customize the AI agent's behavior by defining a `PERSONAL_PROMPT` in `personal_prompt.py`. This allows you to provide specific instructions or preferences that the AI will consider when generating your schedule.
 
@@ -142,7 +155,7 @@ It will then create a schedule that contains all the events and some of the task
 
     > **Note**: If you want to run the agent with GitHub Actions (see [Set Up GitHub Actions Section](#github-actions)), you will have to upload `personal_prompt.py` to your GitHub repo or follow the same steps as indicated for the contents of `credentials.json` and `token.json` (steps are explained in [Set Up GitHub Actions Section](#github-actions)).
 
-7.  **Configure Langfuse for Tracking (Optional)**
+8.  **Configure Langfuse for Tracking (Optional)**
 
     -   Go to [Langfuse](https://langfuse.com) and create an account
     -   Create a new project and get your API keys
@@ -157,19 +170,19 @@ It will then create a schedule that contains all the events and some of the task
 
     Alternatively, if you don't want to use Langfuse, open `src/agent.py` and remove or comment out all code related to `langfuse_handler`.
 
-8.  **Run the Application**
+9.  **Run the Application**
 
     ```bash
     python -m src.agent
     ```
 
-9.  **First Run Authorization**
+10.  **First Run Authorization**
 
     -   On first run, the application will open a browser window
     -   Log in with your Google account and authorize the application
     -   The app will save your tokens locally in the file for `token.json` future use
 
-10. <a id="github-actions"></a>**Set Up GitHub Actions for Scheduled Execution (Optional)**
+11. <a id="github-actions"></a>**Set Up GitHub Actions for Scheduled Execution (Optional)**
 
     If you'd like to run the AI Scheduler automatically on a daily schedule using GitHub Actions:
 
